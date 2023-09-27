@@ -44,7 +44,7 @@ abstract class BaseController extends Controller
     // protected $session;
 
     /**
-     * @return void
+     * Constructor.
      */
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
     {
@@ -54,5 +54,30 @@ abstract class BaseController extends Controller
         // Preload any models, libraries, etc, here.
 
         // E.g.: $this->session = \Config\Services::session();
+    }
+    protected function validationErrorResponse()
+    {
+        return $this->response->setStatusCode(400)->setJSON([
+            'error' => true,
+            'message' => ERROR_INVALID_INPUT,
+            'errors' => $this->validator->getErrors()
+        ]);
+    }
+
+    protected function errorResponse($message)
+    {
+        return $this->response->setStatusCode(400)->setJSON([
+            'error' => true,
+            'message' => $message
+        ]);
+    }
+
+    protected function successResponse($message, $payload = [])
+    {
+        return $this->response->setJSON([
+            "success" => true,
+            "message" => $message,
+            "payload" => $payload
+        ]);
     }
 }
