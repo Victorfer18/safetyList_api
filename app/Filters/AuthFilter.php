@@ -10,6 +10,7 @@ use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
+require APPPATH . 'Helpers/helpers.php';
 class AuthFilter implements FilterInterface
 {
     /**
@@ -27,9 +28,13 @@ class AuthFilter implements FilterInterface
      *
      * @return mixed
      */
+    private function SECRET_KEY(): string
+    {
+        return formatSecretKey(getenv('encryption.key'));
+    }
     public function before(RequestInterface $request, $arguments = null)
     {
-        $key = "5ab3dd8ce952f62f8bdb30b366160ccbf8abc3d7a010d63675b7bcd33b11033a";
+        $key = self::SECRET_KEY();
         $header = $request->getHeaderLine("Authorization");
         $token = null;
         if (!empty($header)) {

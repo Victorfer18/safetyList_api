@@ -61,7 +61,12 @@ function fileToURL(string $file): string
     return $server . $basePath . $file;
 }
 
-function generateJWT(array $payload): string
+function generateJWT(array $payload, string $key): string
 {
-    return JWT::encode($payload, "5ab3dd8ce952f62f8bdb30b366160ccbf8abc3d7a010d63675b7bcd33b11033a", "HS256");
+    return JWT::encode($payload, $key, "HS256");
+}
+
+function formatSecretKey(string $value): string
+{
+    return substr($value, strlen('hex2bin:'));
 }

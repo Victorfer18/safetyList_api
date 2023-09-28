@@ -8,6 +8,10 @@ require APPPATH . 'Helpers/helpers.php';
 
 class User extends BaseController
 {
+    private function SECRET_KEY(): string
+    {
+        return formatSecretKey(getenv('encryption.key'));
+    }
     public function login()
     {
         $rules = [
@@ -35,7 +39,7 @@ class User extends BaseController
         if ($getUser["situation_id"] == 0) {
             return $this->errorResponse(ERROR_ACCOUNT_INACTIVE);
         }
-        $token = generateJWT([$getUser["user_id"]]);
+        $token = generateJWT([$getUser["user_id"]], self::SECRET_KEY());
         return $this->successResponse(INFO_SUCCESS, $token);
     }
 }
