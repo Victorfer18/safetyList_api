@@ -16,7 +16,7 @@ class UserSeeder extends Seeder
                 'user_name' => $faker->name,
                 'user_email' => $faker->email,
                 'user_created' => $faker->date('Y-m-d H:i:s'),
-                'group_id' => $faker->numberBetween(1, 4),
+                'group_id' => $faker->numberBetween(4),
                 'situation_id' => $faker->numberBetween(1, 3),
                 'client_id' => $i,
                 'user_doc' => $faker->numerify('###########'),
