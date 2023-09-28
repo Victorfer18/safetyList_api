@@ -35,7 +35,7 @@ class User extends BaseController
         if ($getUser["situation_id"] == 0) {
             return $this->errorResponse(ERROR_ACCOUNT_INACTIVE);
         }
-        $token = generateJWT($getUser["user_id"]);
+        $token = generateJWT([$getUser["user_id"]]);
         return $this->successResponse(INFO_SUCCESS, $token);
     }
 }
