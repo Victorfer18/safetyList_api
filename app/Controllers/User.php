@@ -11,7 +11,7 @@ class User extends BaseController
     public function login()
     {
         $rules = [
-            'user_email' => 'required|valid_email|is_not_unique[user.user_email]',
+            'user_email' => 'required|valid_email',
             'user_password' => 'required',
         ];
         if (!$this->validate($rules)) {
