@@ -10,5 +10,6 @@ $routes->get('/', 'Home::index');
 $routes->post('/login', 'User::login');
 
 $routes->group('inspections', function ($routes) {
+    $routes->put('alter_status/(:any)', 'InspectionController::alterStatusInspectionById/$1', ['filter' => 'authFilter']);
     $routes->get('(:any)', 'InspectionController::getInspectionsByClient/$1', ['filter' => 'authFilter']);
 });

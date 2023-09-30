@@ -39,4 +39,24 @@ class InspectionController extends BaseController
         $result = $query->get()->getResultArray();
         return $this->successResponse(INFO_SUCCESS, $result);
     }
+    public function alterStatusInspectionById(int $id_inspection)
+    {
+        $rules = [
+            'user_id' => 'required|numeric',
+            'status_inspection' => 'required|numeric',
+        ];
+        if (!$this->validate($rules)) {
+            return $this->validationErrorResponse();
+        }
+        $id_user = $this->request->getVar('user_id');
+        $status = $this->request->getVar('status_inspection');
+        $date = date('Y-m-d H:i:s');
+        $query = $this->db->table('inspection')
+            ->set('user_id', $id_user)
+            ->set('date_init', $date)
+            ->set('status_inspection', $status)
+            ->where('inspection_id', $id_inspection)
+            ->update();
+        return $this->successResponse(INFO_SUCCESS, $query);
+    }
 }
