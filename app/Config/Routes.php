@@ -8,3 +8,4 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 
 $routes->post('/login', 'User::login');
+$routes->get('/getActiveClients', 'ClientController::getActiveClients',['filter' => 'authFilter']);
