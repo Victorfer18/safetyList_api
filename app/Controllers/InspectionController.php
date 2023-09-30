@@ -51,8 +51,11 @@ class InspectionController extends BaseController
         $id_user = $this->request->getVar('user_id');
         $status = $this->request->getVar('status_inspection');
         $date = date('Y-m-d H:i:s');
-        $query = $this->db->table('inspection')
-            ->set('user_id', $id_user)
+        $query = $this->db->table('inspection');
+        if (empty($query->where('inspection_id', $id_inspection)->get()->getResultArray())) {
+            return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
+        }
+        $query->set('user_id', $id_user)
             ->set('date_init', $date)
             ->set('status_inspection', $status)
             ->where('inspection_id', $id_inspection)
