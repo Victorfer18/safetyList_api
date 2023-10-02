@@ -3,7 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
-use App\Libraries\DatabaseWithSSH;
+use App\Models\UserModel;
 
 require APPPATH . 'Helpers/helpers.php';
 
@@ -13,38 +13,38 @@ class User extends BaseController
     {
         return formatSecretKey(getenv('encryption.key'));
     }
+
     public function login()
     {
         $rules = [
             'user_email' => 'required|valid_email',
             'user_password' => 'required',
         ];
+
         if (!$this->validate($rules)) {
             return $this->validationErrorResponse();
         }
-        $userModel = new \App\Models\UserModel();
-        $userEntity = new \App\Entities\UserEntity();
-        $userEntity->setUserEmail($this->request->getVar('user_email'));
-        $userEntity->setUserPassword($this->request->getVar('user_password'));
-        $conditions = [
-            "user_email" => $userEntity->getUserEmail(),
-            "group_id" => 4,
-        ];
-        $getUser = $userModel->where($conditions)->first();
 
-        if (empty($getUser)) {
+        $userModel = new UserModel();
+        $userEntity = $userModel->where([
+            'user_email' => $this->request->getVar('user_email'),
+            'group_id' => 4,
+        ])->first();
+
+        if (!$userEntity) {
             return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
         }
 
-        if ((sha1($userEntity->getUserPassword()) != $getUser["user_password"])) {
+        if (!password_verify($this->request->getVar('user_password'), $userEntity->getUserPassword())) {
             return $this->errorResponse(ERROR_INVALID_USER_OR_PASSWORD);
         }
 
-        if ($getUser["situation_id"] == 0) {
+        if ($userEntity->getSituationId() === 0) {
             return $this->errorResponse(ERROR_ACCOUNT_INACTIVE);
         }
 
-        $token = generateJWT([$getUser["user_id"]], self::SECRET_KEY());
+        $token = generateJWT([$userEntity->getUserId()], self::SECRET_KEY());
+
         return $this->successResponse(INFO_SUCCESS, $token);
     }
 }

@@ -13,6 +13,6 @@ $routes->group('clients', function ($routes) {
 });
 
 $routes->group('inspections', function ($routes) {
-    $routes->put('alter_status/(:any)', 'InspectionController::alterStatusInspectionById/$1', ['filter' => 'authFilter']);
-    $routes->get('(:any)', 'InspectionController::getInspectionsByClient/$1', ['filter' => 'authFilter']);
+    $routes->put('alter_status/(:any)', 'InspectionController::updateInspectionStatusById/$1', ['filter' => 'authFilter']);
+    $routes->get('(:any)', 'InspectionController::getInspectionsByClientIdAndStatus/$1', ['filter' => 'authFilter']);
 });
