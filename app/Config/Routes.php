@@ -14,5 +14,6 @@ $routes->group('clients', function ($routes) {
 
 $routes->group('inspections', function ($routes) {
     $routes->put('alter_status/(:any)', 'InspectionController::alterStatusInspectionById/$1', ['filter' => 'authFilter']);
+    $routes->get('getInspectableList/(:num)', 'InspectionController::getInspectableList/$1', ['filter' => 'authFilter']);
     $routes->get('(:any)', 'InspectionController::getInspectionsByClient/$1', ['filter' => 'authFilter']);
 });
