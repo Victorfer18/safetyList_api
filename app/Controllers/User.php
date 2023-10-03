@@ -20,31 +20,28 @@ class User extends BaseController
             'user_email' => 'required|valid_email',
             'user_password' => 'required',
         ];
-
         if (!$this->validate($rules)) {
             return $this->validationErrorResponse();
         }
-
-        $userModel = new UserModel();
-        $userEntity = $userModel->where([
-            'user_email' => $this->request->getVar('user_email'),
-            'group_id' => 4,
-        ])->first();
-
-        if (!$userEntity) {
+        $userModel = new \App\Models\UserModel();
+        $userEntity = new \App\Entities\UserEntity();
+        $userEntity->setUserEmail($this->request->getVar('user_email'));
+        $userEntity->setUserPassword($this->request->getVar('user_password'));
+        $conditions = [
+            "user_email" => $userEntity->getUserEmail(),
+            "group_id" => 4,
+        ];
+        $getUser = $userModel->where($conditions)->first();
+        if (empty($getUser)) {
             return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
         }
-
-        if (!password_verify($this->request->getVar('user_password'), $userEntity->getUserPassword())) {
+        if ((sha1($userEntity->getUserPassword()) != $getUser["user_password"])) {
             return $this->errorResponse(ERROR_INVALID_USER_OR_PASSWORD);
         }
-
-        if ($userEntity->getSituationId() === 0) {
+        if ($getUser["situation_id"] == 0) {
             return $this->errorResponse(ERROR_ACCOUNT_INACTIVE);
         }
-
-        $token = generateJWT([$userEntity->getUserId()], self::SECRET_KEY());
-
+        $token = generateJWT([$getUser["user_id"]], self::SECRET_KEY());
         return $this->successResponse(INFO_SUCCESS, $token);
     }
 }

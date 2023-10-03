@@ -116,14 +116,14 @@ class InspectionController extends BaseController
     {
         $client_id = intval($client_id);
         $query = $this->db->table('client CLI')
-        ->select('CLICHL.client_id')
-        ->join('client CLICHL', 'CLICHL.client_parent = CLI.client_id')
-        ->where('CLI.client_id', $client_id)
-        ->get();
-    
+            ->select('CLICHL.client_id')
+            ->join('client CLICHL', 'CLICHL.client_parent = CLI.client_id')
+            ->where('CLI.client_id', $client_id)
+            ->get();
+
         $clientIds = $query->getResultArray();
         $clientIds = array_column($clientIds, 'client_id');
-      
+
         $query = $this->db->table('sys SYS')
             ->select('SYS.system_id, SYS.client_id, CLI.client_level, CLI.client_parent, SYS.situation_id, SYS.system_type_id, TYP.system_type_name, TYP.system_type_icon, GRP.system_group_id, GRP.system_group_name, SYSP.is_closed')
             ->join('client CLI', 'CLI.client_id = SYS.client_id')
@@ -136,13 +136,13 @@ class InspectionController extends BaseController
             ->where('TYP.is_safetyList', 1)
             ->where('SYSP.is_closed', 1)
             ->get();
-        
+
         $inspectables = $query->getResultArray();
 
         $query = $this->db->table('sys_inspection')
-        ->select()
-        ->where('is_closed', 1)
-        ->get();           
+            ->select()
+            ->where('is_closed', 1)
+            ->get();
         return $this->successResponse(INFO_SUCCESS, $inspectables);
     }
 }
