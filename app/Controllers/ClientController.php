@@ -37,4 +37,28 @@ class ClientController extends BaseController
 
         return $this->successResponse(INFO_SUCCESS, $query->getResultArray());
     }
+
+    public function getLogosInspectables(int $id_client){
+        $query = $this->db->table('organization_logo')
+                     ->select('organization_logo_path')
+                     ->where('client_id', $id_client)
+                     ->get()
+                     ->getResult();
+    
+        $logo = $query[0];      
+
+        if (empty($logo)) {
+            return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
+        }  
+
+        if(!file_exists($logo->organization_logo_path)){
+            return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
+        }
+    
+        $data = file_get_contents($logo->organization_logo_path);
+        $this->response->setContentType('image/jpeg');        
+        $this->response->setHeader('Content-Length', strlen($data));               
+        $this->response->setBody($data);    
+        return $this->response;    
+    }
 }
