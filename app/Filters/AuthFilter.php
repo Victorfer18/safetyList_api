@@ -57,7 +57,7 @@ class AuthFilter implements FilterInterface
                 'error' => true,
                 'message' => 'Token expirado!',
             ]);
-        } catch (Exception $ex) {
+        } finally {
             $response = service('response');
             return $response->setStatusCode(401)->setJSON([
                 'error' => true,
