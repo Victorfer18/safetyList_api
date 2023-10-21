@@ -9,7 +9,7 @@ $routes->get('/', 'Home::index');
 
 $routes->post('/login', 'User::login');
 $routes->group('clients', function ($routes) {
-    // $routes->get('(:any)', 'ClientController::getClientsByIdParent/$1', ['filter' => 'authFilter']);
+    $routes->get('(:any)', 'ClientController::getClientsByIdParent/$1', ['filter' => 'authFilter']);
     $routes->get('(:any)', 'ClientController::getClientsByIdParent/$1');
 });
 
