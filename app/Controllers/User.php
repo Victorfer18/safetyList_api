@@ -41,7 +41,7 @@ class User extends BaseController
         if ($getUser["situation_id"] == 0) {
             return $this->errorResponse(ERROR_ACCOUNT_INACTIVE);
         }
-        $token = generateJWT([$getUser["user_id"]], self::SECRET_KEY());
+        $token = generateJWT([$getUser["user_id"], $getUser["client_id"]], self::SECRET_KEY());
         return $this->successResponse(INFO_SUCCESS, $token);
     }
 }
