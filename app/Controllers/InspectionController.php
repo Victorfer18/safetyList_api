@@ -112,8 +112,19 @@ class InspectionController extends BaseController
         return $this->successResponse(INFO_SUCCESS);
     }
 
-    public function getInspectableList(int $client_id)
+    public function getInspectableList()
     {
+        $rules = [
+            'inspection_id' => 'required|numeric',
+            'client_id' => 'required|numeric',
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->validationErrorResponse();
+        }
+
+        $inspection_id = $this->request->getVar('inspection_id');
+        $client_id = $this->request->getVar('client_id');
         $client_id = intval($client_id);
         $query = $this->db->table('client CLI')
             ->select('CLICHL.client_id')
@@ -125,24 +136,20 @@ class InspectionController extends BaseController
         $clientIds = array_column($clientIds, 'client_id');
 
         $query = $this->db->table('sys SYS')
-            ->select('SYS.system_id, SYS.client_id, CLI.client_level, CLI.client_parent, SYS.situation_id, SYS.system_type_id, TYP.system_type_name, TYP.system_type_icon, GRP.system_group_id, GRP.system_group_name, SYSP.is_closed')
+            ->select('SYS.system_id, SYS.client_id, CLI.client_level, CLI.client_parent, SYS.situation_id, SYS.system_type_id, TYP.system_type_name, TYP.system_type_icon, GRP.system_group_id, GRP.system_group_name, SYSP.is_closed, SYSP.inspection_id')
             ->join('client CLI', 'CLI.client_id = SYS.client_id')
             ->join('system_type TYP', 'SYS.system_type_id = TYP.system_type_id')
             ->join('system_group GRP', 'GRP.system_group_id = TYP.system_group_id')
             ->join('sys_inspection SYSP', 'SYSP.system_type_id = SYS.system_type_id and SYSP.client_id = CLI.client_parent')
             ->whereIn('SYS.client_id', $clientIds)
+            ->where('SYSP.inspection_id', $inspection_id)
             ->where('SYS.situation_id', 1)
             ->where('TYP.situation_id', 1)
             ->where('TYP.is_safetyList', 1)
-            ->where('SYSP.is_closed', 1)
             ->get();
 
         $inspectables = $query->getResultArray();
 
-        $query = $this->db->table('sys_inspection')
-            ->select()
-            ->where('is_closed', 1)
-            ->get();
         return $this->successResponse(INFO_SUCCESS, $inspectables);
     }
 }
