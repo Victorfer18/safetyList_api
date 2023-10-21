@@ -42,26 +42,27 @@ class ClientController extends BaseController
         $query = $this->db->table('organization_logo')
                      ->select('organization_logo_path')
                      ->where('client_id', $id_client)
+                     ->where('situation_id', 1)
                      ->get()
-                     ->getResult();
+                     ->getResultArray();
         
-        if(!$query){
+        if (empty($query)) {
             return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
         }
-
-        $logo = $query[0];      
-        
+    
+        $logo = $query[0];
+    
         if (empty($logo)) {
             return;
-        }  
-
-        if(!file_exists($logo->organization_logo_path)){
+        }
+    
+        if (!file_exists($logo['organization_logo_path'])) {
             return;
         }
-        $data = file_get_contents($logo->organization_logo_path);
-        $this->response->setContentType('image/jpeg');        
-        $this->response->setHeader('Content-Length', strlen($data));               
-        $this->response->setBody($data);    
-        return $this->response;    
+        $data = file_get_contents($logo['organization_logo_path']);
+        $this->response->setContentType('image/jpeg');
+        $this->response->setHeader('Content-Length', strlen($data));
+        $this->response->setBody($data);
+        return $this->response;
     }
 }
