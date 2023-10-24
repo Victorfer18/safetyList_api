@@ -50,7 +50,7 @@ class AuthFilter implements FilterInterface
             ]);
         }
         try {
-            $decoded = JWT::decode($token, new Key($key, 'HS256'));
+            define("DATA_JWT", JWT::decode($token, new Key($key, 'HS256')));
         } catch (ExpiredException $ex) {
             $response = service('response');
             return $response->setStatusCode(401)->setJSON([
