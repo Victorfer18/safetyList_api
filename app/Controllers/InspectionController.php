@@ -118,11 +118,9 @@ class InspectionController extends BaseController
             'inspection_id' => 'required|numeric',
             'client_id' => 'required|numeric',
         ];
-
         if (!$this->validate($rules)) {
             return $this->validationErrorResponse();
         }
-
         $inspection_id = $this->request->getVar('inspection_id');
         $client_id = $this->request->getVar('client_id');
         $client_id = intval($client_id);
