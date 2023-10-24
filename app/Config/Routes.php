@@ -8,6 +8,7 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 
 $routes->post('/login', 'User::login');
+$routes->post('/validate_jwt', 'SystemController::validateJwt', ['filter' => 'authFilter']);
 $routes->group('clients', function ($routes) {
     $routes->get('getLogoInspectable/(:any)', 'ClientController::getLogosInspectables/$1');
     $routes->get('(:any)', 'ClientController::getClientsByIdParent/$1', ['filter' => 'authFilter']);
