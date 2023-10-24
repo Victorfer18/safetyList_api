@@ -152,4 +152,77 @@ class InspectionController extends BaseController
 
         return $this->successResponse(INFO_SUCCESS, $inspectables);
     }
+
+    public function registerMaintenance(){
+        $rules = [
+            'system_type_id' => 'required|numeric',
+            'maintenance_type_id' => 'required|numeric',          
+            'client_id' => 'required|numeric',
+            'consistency_status' => 'required|numeric',
+            'observation' => 'required',
+            // 'image'=> 'required|image',
+        ];
+    
+        if (!$this->validate($rules)) {
+            return $this->validationErrorResponse();
+        }
+    
+        $system_type_id = $this->request->getVar('system_type_id');
+        $maintenance_type_id = $this->request->getVar('maintenance_type_id');
+        $user_id = DATA_JWT;
+        $client_id = $this->request->getVar('client_id');
+        $consistency_status = $this->request->getVar('consistency_status');
+        $observation = $this->request->getVar('observation');
+        $action = $this->request->getVar('action');
+        $image = $this->request->getVar('image');
+    
+        if ($consistency_status == 0) {
+            if (!$this->validate(['action' => 'required'])) {
+                return $this->validationErrorResponse();
+            }
+        }
+    
+        if (empty($action)) {
+            $action = null;
+        }
+    
+        $query = $this->db->table('client AS CLI')
+            ->select('CLI.client_id, CLI.client_parent, CLI.client_level, ADDR.address_street, ADDR.address_number, ADDR.address_zipcode, ADDR.address_district, ADDR.address_complement, STA.state_id, STA.state_acronym, STA.state_name, CIT.city_id, CIT.city_name, SIT.situation_id, SIT.situation_acronym, SIT.situation_name')
+            ->select('(SELECT COUNT(*) FROM client BDG WHERE BDG.client_parent = CLI.client_id AND BDG.client_level = 4) as building_number', false)
+            ->join('address AS ADDR', 'ADDR.client_id = CLI.client_id', 'left')
+            ->join('situation AS SIT', 'SIT.situation_id = CLI.situation_id', 'left')
+            ->join('state AS STA', 'STA.state_id = ADDR.state_id', 'left')
+            ->join('city as CIT', 'CIT.city_id = ADDR.city_id', 'left')
+            ->where('CLI.client_parent', $client_id)
+            ->where('CLI.client_level', 3)
+            ->where('SIT.situation_id', 1)
+            ->orderBy('CLI.client_parent, CLI.client_id', 'ASC');
+    
+        $result = $query->get()->getRow();
+        $client_id = $result->client_id;
+    
+
+        $subquery = $this->db->table('sys');
+        $subquery->select('system_id');
+        $subquery->where('client_id', $client_id);
+        $subquery->where('system_type_id', $system_type_id);
+    
+        $system_id = $subquery->get()->getResultArray();
+        var_dump($system_id);
+        die;
+    
+        $query = $this->db->table('system_maintenance');
+    
+        $data = [
+            'system_maintenance_text' => $observation,
+            'system_maintenance_created' => date('Y-m-d H:i:s'),
+            'system_maintenance_expiration' => $query->getCompiledSelect("DATE_ADD(NOW(), INTERVAL 30 DAY)", false),
+            'user_id' => $user_id,
+            'system_id' => $system_id, // Use o sistema_id obtido da subconsulta
+            'maintenance_type_id' => $maintenance_type_id,
+            'system_maintenance_action' => $action
+        ];
+    
+        $query->insert($data);
+    }
 }
