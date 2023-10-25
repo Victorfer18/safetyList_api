@@ -132,7 +132,6 @@ class InspectionController extends BaseController
 
         $clientIds = $query->getResultArray();
         $clientIds = array_column($clientIds, 'client_id');
-
         $query = $this->db->table('sys SYS')
             ->select('SYS.system_id, SYS.client_id, CLI.client_level, CLI.client_parent, SYS.situation_id, SYS.system_type_id, TYP.system_type_name, TYP.system_type_icon, GRP.system_group_id, GRP.system_group_name, SYSP.is_closed, SYSP.inspection_id')
             ->join('client CLI', 'CLI.client_id = SYS.client_id')
