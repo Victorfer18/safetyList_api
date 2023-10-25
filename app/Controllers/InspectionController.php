@@ -255,4 +255,53 @@ class InspectionController extends BaseController
 
         return $this->successResponse(INFO_SUCCESS);
     }
+
+    function getMaintenanceType(){
+        $rules = [
+            'system_type_id' => 'required|numeric',        
+            'client_parent' =>'required|numeric'          
+        ];
+    
+        if (!$this->validate($rules)) {
+            return $this->validationErrorResponse();
+        }
+
+        $system_type_id = $this->request->getVar('system_type_id');
+        $client_parent = $this->request->getVar('client_parent');
+
+        $query = $this->db->table('maintenance_type mt')
+        ->select('mt.maintenance_type_id, mt.maintenance_type_name, s.qtd_total')
+        ->join('sys s', 'mt.system_type_id = s.system_type_id', 'left')
+        ->where('mt.situation_id', 1)
+        ->where('mt.is_safetyList', 1)
+        ->where('mt.system_type_id', $system_type_id)
+        ->where('s.client_id', $client_parent)
+        ->get();
+    
+        if ($query) {
+            $result = $query->getResult();
+        
+            $getMaintenanceType = [];
+        
+            foreach ($result as $row) {
+                $cur_type = $row->maintenance_type_id;
+                $cur_name = $row->maintenance_type_name;
+                $cur_total = $row->qtd_total;
+        
+                if ($cur_total === null || $cur_total === 0) {
+                    $getMaintenanceType[] = ['maintenance_type_id' => $cur_type, 'maintenance_type_name' => $cur_name];
+                } else {
+                    for ($count = 1; $count <= $cur_total; $count++) {
+                        $newCurName = $count . ' - ' . $cur_name;
+                        $getMaintenanceType[] = ['maintenance_type_id' => $cur_type, 'maintenance_type_name' => $newCurName];
+                    }
+                }
+            }                
+        }
+        if(empty($getMaintenanceType)){         
+            return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
+        }
+        return $this->successResponse(INFO_SUCCESS, $getMaintenanceType);
+
+    }
 }
