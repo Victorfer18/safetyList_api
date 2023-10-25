@@ -265,10 +265,10 @@ class InspectionController extends BaseController
         if (!$this->validate($rules)) {
             return $this->validationErrorResponse();
         }
-
+    
         $system_type_id = $this->request->getVar('system_type_id');
         $client_parent = $this->request->getVar('client_parent');
-
+    
         $query = $this->db->table('maintenance_type mt')
             ->select('mt.maintenance_type_id, mt.maintenance_type_name, s.qtd_total')
             ->join('sys s', 'mt.system_type_id = s.system_type_id', 'left')
@@ -277,27 +277,33 @@ class InspectionController extends BaseController
             ->where('mt.system_type_id', $system_type_id)
             ->where('s.client_id', $client_parent)
             ->get();
-
+    
         if (!$query) {
             return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
         }
-
+    
         $results = $query->getResult();
-
-        $maintenanceTypes = array_map(function ($result) {
+    
+        $maintenanceTypes = [];
+    
+        foreach ($results as $result) {
             $maintenanceType = [
                 'maintenance_type_id' => $result->maintenance_type_id,
                 'maintenance_type_name' => $result->maintenance_type_name
             ];
+    
             if ($result->qtd_total !== null && $result->qtd_total > 0) {
+                $modifiedResults = [];
                 for ($count = 1; $count <= $result->qtd_total; $count++) {
                     $maintenanceType['maintenance_type_name'] = $count . ' - ' . $result->maintenance_type_name;
+                    $modifiedResults[] = $maintenanceType;
                 }
+                $maintenanceTypes = array_merge($maintenanceTypes, $modifiedResults);
+            } else {
+                $maintenanceTypes[] = $maintenanceType;
             }
-
-            return $maintenanceType;
-        }, $results);
-
+        }
+    
         return $this->successResponse(INFO_SUCCESS, $maintenanceTypes);
     }
 }
