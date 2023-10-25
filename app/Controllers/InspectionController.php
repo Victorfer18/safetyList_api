@@ -260,14 +260,16 @@ class InspectionController extends BaseController
     {
         $rules = [
             'system_type_id' => 'required|numeric',
-            'client_parent' => 'required|numeric'
+            'client_id' => 'required|numeric'
         ];
         if (!$this->validate($rules)) {
             return $this->validationErrorResponse();
         }
     
         $system_type_id = $this->request->getVar('system_type_id');
-        $client_parent = $this->request->getVar('client_parent');
+        $client_id = $this->request->getVar('client_id');
+
+
     
         $query = $this->db->table('maintenance_type mt')
             ->select('mt.maintenance_type_id, mt.maintenance_type_name, s.qtd_total')
@@ -275,7 +277,7 @@ class InspectionController extends BaseController
             ->where('mt.situation_id', 1)
             ->where('mt.is_safetyList', 1)
             ->where('mt.system_type_id', $system_type_id)
-            ->where('s.client_id', $client_parent)
+            ->where('s.client_id', $client_id)
             ->get();
     
         if (!$query) {
