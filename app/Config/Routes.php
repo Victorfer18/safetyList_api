@@ -16,8 +16,8 @@ $routes->group('clients', function ($routes) {
 });
 
 $routes->group('inspections', function ($routes) {
-    $routes->get('getInspectableList', 'InspectionController::getInspectableList', ['filter' => 'authFilter']);
-    $routes->get('get_maintenance_type', 'InspectionController::getMaintenanceType', ['filter' => 'authFilter']);
+    $routes->post('getInspectableList', 'InspectionController::getInspectableList', ['filter' => 'authFilter']);
+    $routes->post('get_maintenance_type', 'InspectionController::getMaintenanceType', ['filter' => 'authFilter']);
     $routes->put('alter_status/(:any)', 'InspectionController::updateInspectionStatusById/$1', ['filter' => 'authFilter']);
     $routes->post('save_is_closed', 'InspectionController::saveInspectableIsClosed', ['filter' => 'authFilter']);
     $routes->post('register_maintenance', 'InspectionController::registerMaintenance', ['filter' => 'authFilter']);
