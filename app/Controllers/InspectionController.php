@@ -131,7 +131,7 @@ class InspectionController extends BaseController
             ->get();
 
         $clientIds = $query->getResultArray();
-        
+
         $clientIds = array_column($clientIds, 'client_id');
         $query = $this->db->table('sys SYS')
             ->select('SYS.system_id, SYS.client_id, CLI.client_level, CLI.client_parent, SYS.situation_id, SYS.system_type_id, TYP.system_type_name, TYP.system_type_icon, GRP.system_group_id, GRP.system_group_name, SYSP.is_closed, SYSP.inspection_id')
@@ -167,37 +167,38 @@ class InspectionController extends BaseController
         return $this->successResponse(INFO_SUCCESS, $inspectables);
     }
 
-    public function registerMaintenance(){
+    public function registerMaintenance()
+    {
         $rules = [
             'system_type_id' => 'required|numeric',
-            'maintenance_type_id' => 'required|numeric',                      
+            'maintenance_type_id' => 'required|numeric',
             'consistency_status' => 'required',
             'observation' => 'required',
-            'client_parent' =>'required|numeric'          
+            'client_parent' => 'required|numeric'
         ];
-    
+
         if (!$this->validate($rules)) {
             return $this->validationErrorResponse();
         }
-    
+
         $system_type_id = $this->request->getVar('system_type_id');
         $maintenance_type_id = $this->request->getVar('maintenance_type_id');
-        $user_id = DATA_JWT->user_id;    
+        $user_id = DATA_JWT->user_id;
         $client_parent = $this->request->getVar('client_parent');
         $consistency_status = $this->request->getVar('consistency_status');
         $observation = $this->request->getVar('observation');
         $action = $this->request->getVar('action');
         $image = $this->request->getVar('image');
         if (!$consistency_status) {
-            if (!$this->validate(['action' => 'required'])) {               
+            if (!$this->validate(['action' => 'required'])) {
                 return $this->validationErrorResponse();
             }
         }
-    
+
         if (empty($action)) {
             $action = '';
         }
-    
+
         $query = $this->db->table('client AS CLI')
             ->select('CLI.client_id, CLI.client_parent, CLI.client_level, ADDR.address_street, ADDR.address_number, ADDR.address_zipcode, ADDR.address_district, ADDR.address_complement, STA.state_id, STA.state_acronym, STA.state_name, CIT.city_id, CIT.city_name, SIT.situation_id, SIT.situation_acronym, SIT.situation_name')
             ->select('(SELECT COUNT(*) FROM client BDG WHERE BDG.client_parent = CLI.client_id AND BDG.client_level = 4) as building_number', false)
@@ -209,35 +210,35 @@ class InspectionController extends BaseController
             ->where('CLI.client_level', 3)
             ->where('SIT.situation_id', 1)
             ->orderBy('CLI.client_parent, CLI.client_id', 'ASC');
-    
+
         $result = $query->get()->getRow();
         if (empty($result)) {
             return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
         }
         $client_parent = $result->client_id;
-    
+
 
         $subquery = $this->db->table('sys');
         $subquery->select('system_id');
         $subquery->where('client_id', $client_parent);
         $subquery->where('system_type_id', $system_type_id);
-    
+
         $system_id = $subquery->get()->getResultArray();
         if (empty($system_id)) {
             return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
         }
-        $system_id = $system_id[0]["system_id"];       
-        
-        $query = $this->db->table('system_maintenance_according');        
+        $system_id = $system_id[0]["system_id"];
+
+        $query = $this->db->table('system_maintenance_according');
         $data = [
             'system_maintenance_according_text' => $observation,
-            'system_maintenance_according_created' => date('Y-m-d H:i:s'),        
+            'system_maintenance_according_created' => date('Y-m-d H:i:s'),
             'user_id' => $user_id,
             'system_id' => $system_id,
-            'maintenance_type_id' => $maintenance_type_id          
+            'maintenance_type_id' => $maintenance_type_id
         ];
 
-        if(!$consistency_status){
+        if (!$consistency_status) {
             $query = $this->db->table('system_maintenance');
             $data = [
                 'system_maintenance_text' => $observation,
@@ -255,12 +256,12 @@ class InspectionController extends BaseController
         return $this->successResponse(INFO_SUCCESS);
     }
 
-    function getMaintenanceType(){
+    function getMaintenanceType()
+    {
         $rules = [
-            'system_type_id' => 'required|numeric',        
-            'client_parent' =>'required|numeric'          
+            'system_type_id' => 'required|numeric',
+            'client_parent' => 'required|numeric'
         ];
-    
         if (!$this->validate($rules)) {
             return $this->validationErrorResponse();
         }
@@ -269,38 +270,34 @@ class InspectionController extends BaseController
         $client_parent = $this->request->getVar('client_parent');
 
         $query = $this->db->table('maintenance_type mt')
-        ->select('mt.maintenance_type_id, mt.maintenance_type_name, s.qtd_total')
-        ->join('sys s', 'mt.system_type_id = s.system_type_id', 'left')
-        ->where('mt.situation_id', 1)
-        ->where('mt.is_safetyList', 1)
-        ->where('mt.system_type_id', $system_type_id)
-        ->where('s.client_id', $client_parent)
-        ->get();
-    
-        if ($query) {
-            $result = $query->getResult();
-        
-            $getMaintenanceType = [];
-        
-            foreach ($result as $row) {
-                $cur_type = $row->maintenance_type_id;
-                $cur_name = $row->maintenance_type_name;
-                $cur_total = $row->qtd_total;
-        
-                if ($cur_total === null || $cur_total === 0) {
-                    $getMaintenanceType[] = ['maintenance_type_id' => $cur_type, 'maintenance_type_name' => $cur_name];
-                } else {
-                    for ($count = 1; $count <= $cur_total; $count++) {
-                        $newCurName = $count . ' - ' . $cur_name;
-                        $getMaintenanceType[] = ['maintenance_type_id' => $cur_type, 'maintenance_type_name' => $newCurName];
-                    }
-                }
-            }                
-        }
-        if(empty($getMaintenanceType)){         
+            ->select('mt.maintenance_type_id, mt.maintenance_type_name, s.qtd_total')
+            ->join('sys s', 'mt.system_type_id = s.system_type_id', 'left')
+            ->where('mt.situation_id', 1)
+            ->where('mt.is_safetyList', 1)
+            ->where('mt.system_type_id', $system_type_id)
+            ->where('s.client_id', $client_parent)
+            ->get();
+
+        if (!$query) {
             return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
         }
-        return $this->successResponse(INFO_SUCCESS, $getMaintenanceType);
 
+        $results = $query->getResult();
+
+        $maintenanceTypes = array_map(function ($result) {
+            $maintenanceType = [
+                'maintenance_type_id' => $result->maintenance_type_id,
+                'maintenance_type_name' => $result->maintenance_type_name
+            ];
+            if ($result->qtd_total !== null && $result->qtd_total > 0) {
+                for ($count = 1; $count <= $result->qtd_total; $count++) {
+                    $maintenanceType['maintenance_type_name'] = $count . ' - ' . $result->maintenance_type_name;
+                }
+            }
+
+            return $maintenanceType;
+        }, $results);
+
+        return $this->successResponse(INFO_SUCCESS, $maintenanceTypes);
     }
 }
