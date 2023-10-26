@@ -42,8 +42,8 @@ class InspectionController extends BaseController
     public function updateInspectionStatusById(int $id_inspection)
     {
         $rules = [
-            'user_id' => 'required|numeric',
-            'status_inspection' => 'required|numeric',
+            'user_id' => 'required|numeric|is_natural_no_zero',
+            'status_inspection' => 'required|numeric|in_list[2,3]',
         ];
 
         if (!$this->validate($rules)) {
@@ -78,9 +78,9 @@ class InspectionController extends BaseController
     public function saveInspectableIsClosed()
     {
         $rules = [
-            'inspection_id' => 'required|numeric',
-            'client_id' => 'required|numeric',
-            'system_type_id' => 'required|numeric',
+            'inspection_id' => 'required|numeric|is_natural_no_zero',
+            'client_id' => 'required|numeric|is_natural_no_zero',
+            'system_type_id' => 'required|numeric|is_natural_no_zero',
         ];
 
         if (!$this->validate($rules)) {
@@ -115,8 +115,8 @@ class InspectionController extends BaseController
     public function getInspectableList()
     {
         $rules = [
-            'inspection_id' => 'required|numeric',
-            'client_id' => 'required|numeric',
+            'inspection_id' => 'required|numeric|is_natural_no_zero',
+            'client_id' => 'required|numeric|is_natural_no_zero',
         ];
         if (!$this->validate($rules)) {
             return $this->validationErrorResponse();
@@ -170,11 +170,12 @@ class InspectionController extends BaseController
     public function registerMaintenance()
     {
         $rules = [
-            'system_type_id' => 'required|numeric',
-            'maintenance_type_id' => 'required|numeric',
-            'consistency_status' => 'required',
+            'system_type_id' => 'required|numeric|is_natural_no_zero',
+            'maintenance_type_id' => 'required|numeric|is_natural_no_zero',
+            'consistency_status' => 'required|in_list[true, false]',
             'observation' => 'required',
-            'client_parent' => 'required|numeric'
+            'client_parent' => 'required|numeric',
+            'image' => 'uploaded[image]|mime_in[image,image/jpg,image/jpeg,image/png]'
         ];
 
         if (!$this->validate($rules)) {
@@ -188,17 +189,13 @@ class InspectionController extends BaseController
         $consistency_status = $this->request->getVar('consistency_status');
         $observation = $this->request->getVar('observation');
         $action = $this->request->getVar('action');
-        $image = $this->request->getVar('image');
+        $image = $this->request->getFile('image');
+
         if (!$consistency_status) {
             if (!$this->validate(['action' => 'required'])) {
                 return $this->validationErrorResponse();
             }
         }
-
-        if (empty($action)) {
-            $action = '';
-        }
-
         $query = $this->db->table('client AS CLI')
             ->select('CLI.client_id, CLI.client_parent, CLI.client_level, ADDR.address_street, ADDR.address_number, ADDR.address_zipcode, ADDR.address_district, ADDR.address_complement, STA.state_id, STA.state_acronym, STA.state_name, CIT.city_id, CIT.city_name, SIT.situation_id, SIT.situation_acronym, SIT.situation_name')
             ->select('(SELECT COUNT(*) FROM client BDG WHERE BDG.client_parent = CLI.client_id AND BDG.client_level = 4) as building_number', false)
@@ -247,7 +244,7 @@ class InspectionController extends BaseController
                 'user_id' => $user_id,
                 'system_id' => $system_id,
                 'maintenance_type_id' => $maintenance_type_id,
-                'system_maintenance_action' => $action
+                'system_maintenance_action' => $action ?? ""
             ];
         }
 
@@ -259,18 +256,18 @@ class InspectionController extends BaseController
     function getMaintenanceType()
     {
         $rules = [
-            'system_type_id' => 'required|numeric',
-            'client_id' => 'required|numeric'
+            'system_type_id' => 'required|numeric|is_natural_no_zero',
+            'client_id' => 'required|numeric|is_natural_no_zero'
         ];
         if (!$this->validate($rules)) {
             return $this->validationErrorResponse();
         }
-    
+
         $system_type_id = $this->request->getVar('system_type_id');
         $client_id = $this->request->getVar('client_id');
 
 
-    
+
         $query = $this->db->table('maintenance_type mt')
             ->select('mt.maintenance_type_id, mt.maintenance_type_name, s.qtd_total')
             ->join('sys s', 'mt.system_type_id = s.system_type_id', 'left')
@@ -279,21 +276,21 @@ class InspectionController extends BaseController
             ->where('mt.system_type_id', $system_type_id)
             ->where('s.client_id', $client_id)
             ->get();
-    
+
         if (!$query) {
             return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
         }
-    
+
         $results = $query->getResult();
-    
+
         $maintenanceTypes = [];
-    
+
         foreach ($results as $result) {
             $maintenanceType = [
                 'maintenance_type_id' => $result->maintenance_type_id,
                 'maintenance_type_name' => $result->maintenance_type_name
             ];
-    
+
             if ($result->qtd_total !== null && $result->qtd_total > 0) {
                 $modifiedResults = [];
                 for ($count = 1; $count <= $result->qtd_total; $count++) {
@@ -305,7 +302,7 @@ class InspectionController extends BaseController
                 $maintenanceTypes[] = $maintenanceType;
             }
         }
-    
+
         return $this->successResponse(INFO_SUCCESS, $maintenanceTypes);
     }
 }
