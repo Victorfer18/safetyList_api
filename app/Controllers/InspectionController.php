@@ -39,9 +39,10 @@ class InspectionController extends BaseController
         $result = $query->get()->getResultArray();
         return $this->successResponse(INFO_SUCCESS, $result);
     }
-    public function updateInspectionStatusById(int $id_inspection)
+    public function updateInspectionStatusById()
     {
         $rules = [
+            'inspection_id' => 'required|numeric|is_natural_no_zero',
             'user_id' => 'required|numeric|is_natural_no_zero',
             'status_inspection' => 'required|numeric|in_list[2,3]',
         ];
@@ -52,10 +53,11 @@ class InspectionController extends BaseController
 
         $id_user = $this->request->getVar('user_id');
         $status = $this->request->getVar('status_inspection');
+        $inspection_id = $this->request->getVar('inspection_id');
         $date = date('Y-m-d H:i:s');
 
         $query = $this->db->table('inspection');
-        $getInspectionById = $query->where('inspection_id', $id_inspection)->get()->getResultArray();
+        $getInspectionById = $query->where('inspection_id', $inspection_id)->get()->getResultArray();
         if (empty($getInspectionById)) {
             return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
         }
@@ -71,7 +73,7 @@ class InspectionController extends BaseController
             $query->set('date_end', $date);
         }
 
-        $query->where('inspection_id', $id_inspection)
+        $query->where('inspection_id', $inspection_id)
             ->update();
         return $this->successResponse(INFO_SUCCESS);
     }
@@ -175,7 +177,7 @@ class InspectionController extends BaseController
             'consistency_status' => 'required|in_list[true, false]',
             'observation' => 'required',
             'client_parent' => 'required|numeric',
-            'image' => 'uploaded[image]|mime_in[image,image/jpg,image/jpeg,image/png]'
+            // 'image' => 'uploaded[image]|mime_in[image,image/jpg,image/jpeg,image/png]'
         ];
 
         if (!$this->validate($rules)) {
@@ -190,6 +192,7 @@ class InspectionController extends BaseController
         $observation = $this->request->getVar('observation');
         $action = $this->request->getVar('action');
         $image = $this->request->getFile('image');
+        WRITEPATH . 'uploads/' . $image->store();
 
         if (!$consistency_status) {
             if (!$this->validate(['action' => 'required'])) {
