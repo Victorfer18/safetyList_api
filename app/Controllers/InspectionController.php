@@ -177,7 +177,7 @@ class InspectionController extends BaseController
             'consistency_status' => 'required|in_list[true, false]',
             'observation' => 'required',
             'client_parent' => 'required|numeric',
-            // 'image' => 'uploaded[image]|mime_in[image,image/jpg,image/jpeg,image/png]'
+            'image' => 'uploaded[image]|mime_in[image,image/jpg,image/jpeg,image/png]'
         ];
 
         if (!$this->validate($rules)) {
@@ -192,7 +192,7 @@ class InspectionController extends BaseController
         $observation = $this->request->getVar('observation');
         $action = $this->request->getVar('action');
         $image = $this->request->getFile('image');
-        WRITEPATH . 'uploads/' . $image->store();
+        getcwd() . '/uploads/' . $image->store();
 
         if (!$consistency_status) {
             if (!$this->validate(['action' => 'required'])) {
