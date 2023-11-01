@@ -192,8 +192,7 @@ class InspectionController extends BaseController
         $observation = $this->request->getVar('observation');
         $action = $this->request->getVar('action');
         $image = $this->request->getFile('image');
-        getcwd() . '/uploads/' . $image->store();
-
+        uploadFile($image, time() . "/");
         if (!$consistency_status) {
             if (!$this->validate(['action' => 'required'])) {
                 return $this->validationErrorResponse();

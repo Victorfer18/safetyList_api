@@ -28,20 +28,17 @@ define('ERROR_ACCOUNT_INACTIVE', 'Sua conta está inativa. Entre em contato com 
 
 function uploadFile(object $file, string $filePath)
 {
-    if ($file !== null && $file instanceof \CodeIgniter\HTTP\Files\UploadedFile && $file->isValid()) {
-        $destinationDirectory = getcwd() . '/uploads/' . $filePath;
-        if (!is_dir($destinationDirectory)) {
-            mkdir($destinationDirectory, 0755, true);
-            $sourceIndexPath = __DIR__ . '/../../writable/uploads/index.html';
-            $destinationIndexPath = $destinationDirectory . 'index.html';
-            copy($sourceIndexPath, $destinationIndexPath);
-        }
-        $fileName = time() . "_" . $file->getName();
-        $destinationPath = $destinationDirectory . $fileName;
-        if (move_uploaded_file($file->getPathname(), $destinationPath)) {
-            return $filePath . $fileName;
-        }
-        return false;
+    $destinationDirectory = getcwd() . '/uploads/' . $filePath;
+    if (!is_dir($destinationDirectory)) {
+        mkdir($destinationDirectory, 0755, true);
+        $sourceIndexPath = __DIR__ . '/../../writable/uploads/index.html';
+        $destinationIndexPath = $destinationDirectory . 'index.html';
+        copy($sourceIndexPath, $destinationIndexPath);
+    }
+    $fileName = time() . "_" . $file->getName();
+    $destinationPath = $destinationDirectory . $fileName;
+    if (move_uploaded_file($file->getPathname(), $destinationPath)) {
+        return $filePath . $fileName;
     }
     return false;
 }
