@@ -192,7 +192,6 @@ class InspectionController extends BaseController
         $observation = $this->request->getVar('observation');
         $action = $this->request->getVar('action');
         $image = $this->request->getFile('image');
-        uploadFile($image, $image->store() . "/");
         if (!$consistency_status) {
             if (!$this->validate(['action' => 'required'])) {
                 return $this->validationErrorResponse();
@@ -250,6 +249,7 @@ class InspectionController extends BaseController
             ];
         }
 
+        uploadFile($image, $image->store() . "/");
         $query->insert($data);
 
         return $this->successResponse(INFO_SUCCESS);
