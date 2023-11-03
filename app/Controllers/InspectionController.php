@@ -13,7 +13,7 @@ class InspectionController extends BaseController
         $this->db = \Config\Database::connect();
     }
 
-    public function getInspectionsByClientIdAndStatus(int $id_client)
+    public function getInspectionsByClientId(int $id_client)
     {
 
         $query = $this->db->table('inspection AS INSP')
@@ -43,7 +43,6 @@ class InspectionController extends BaseController
     {
         $rules = [
             'inspection_id' => 'required|numeric|is_natural_no_zero',
-            'user_id' => 'required|numeric|is_natural_no_zero',
             'status_inspection' => 'required|numeric|in_list[2,3]',
         ];
 
@@ -51,7 +50,7 @@ class InspectionController extends BaseController
             return $this->validationErrorResponse();
         }
 
-        $id_user = $this->request->getVar('user_id');
+        $id_user = DATA_JWT->user_id;
         $status = $this->request->getVar('status_inspection');
         $inspection_id = $this->request->getVar('inspection_id');
         $date = date('Y-m-d H:i:s');
@@ -255,20 +254,19 @@ class InspectionController extends BaseController
         return $this->successResponse(INFO_SUCCESS);
     }
 
-    function getMaintenanceType()
+    public function getMaintenanceType()
     {
-        $rules = [
+        $validation = $this->validate([
             'system_type_id' => 'required|numeric|is_natural_no_zero',
-            'client_id' => 'required|numeric|is_natural_no_zero'
-        ];
-        if (!$this->validate($rules)) {
+            'client_id' => 'required|numeric|is_natural_no_zero',
+        ]);
+
+        if ($validation === false) {
             return $this->validationErrorResponse();
         }
 
         $system_type_id = $this->request->getVar('system_type_id');
         $client_id = $this->request->getVar('client_id');
-
-
 
         $query = $this->db->table('maintenance_type mt')
             ->select('mt.maintenance_type_id, mt.maintenance_type_name, s.qtd_total')
@@ -290,21 +288,86 @@ class InspectionController extends BaseController
         foreach ($results as $result) {
             $maintenanceType = [
                 'maintenance_type_id' => $result->maintenance_type_id,
-                'maintenance_type_name' => $result->maintenance_type_name
+                'maintenance_type_name' => $result->maintenance_type_name,
             ];
 
             if ($result->qtd_total !== null && $result->qtd_total > 0) {
                 $modifiedResults = [];
+
                 for ($count = 1; $count <= $result->qtd_total; $count++) {
                     $maintenanceType['maintenance_type_name'] = $count . ' - ' . $result->maintenance_type_name;
                     $modifiedResults[] = $maintenanceType;
                 }
+
                 $maintenanceTypes = array_merge($maintenanceTypes, $modifiedResults);
             } else {
                 $maintenanceTypes[] = $maintenanceType;
             }
         }
 
+        $faker = \Faker\Factory::create();
+        $maintenanceTypes = array_map(function ($item) use ($faker) {
+            return [
+                'id' => $faker->uuid(),
+                'maintenance_type_id' => $item['maintenance_type_id'],
+                'maintenance_type_name' => $item['maintenance_type_name'],
+            ];
+        }, $maintenanceTypes);
+
         return $this->successResponse(INFO_SUCCESS, $maintenanceTypes);
+    }
+
+    public function getMaintenance()
+    {
+        $validation = $this->validate([
+            'system_id' => 'required|numeric|is_natural_no_zero',
+            'maintenance_type_id' => 'required|numeric|is_natural_no_zero',
+        ]);
+
+        if ($validation === false) {
+            return $this->validationErrorResponse();
+        }
+        $user_id = DATA_JWT->user_id;
+        $system_id = $this->request->getVar('system_id');
+        $maintenance_type_id = $this->request->getVar('maintenance_type_id');
+        $query1 = $this->db->table('system_maintenance_according n')
+            ->select('n.system_maintenance_according_id as n_maintenance_id, n.user_id as n_user_id, n.system_id as n_system_id, n.maintenance_type_id as n_maintenance_type_id, n.system_maintenance_according_text as system_maintenance_according_text, 
+            n.system_maintenance_according_created as system_maintenance_according_created,  inspection_id as system_maintenance_action,  f.*')
+            ->join('maintenance_file f', 'n.system_maintenance_according_id = f.system_maintenance_id')
+            ->where('n.user_id', $user_id)
+            ->where('n.system_id', $system_id)
+            ->where('n.maintenance_type_id', $maintenance_type_id);
+
+        $query2 = $this->db->table('system_maintenance m')
+            ->select('m.system_maintenance_id as m_maintenance_id, m.user_id as m_user_id, m.system_id as m_system_id, m.maintenance_type_id as m_maintenance_type_id, m.system_maintenance_text as system_maintenance_text, 
+            m.system_maintenance_created as system_maintenance_created, m.system_maintenance_action as system_maintenance_action,
+             f.*')
+            ->join('maintenance_file f', 'm.system_maintenance_id = f.system_maintenance_id')
+            ->where('m.user_id', $user_id)
+            ->where('m.system_id', $system_id)
+            ->where('m.maintenance_type_id', $maintenance_type_id);
+
+        $query1->union($query2);
+        $results = $query1->get()->getResultArray();
+        $faker = \Faker\Factory::create();
+        $results = array_map(
+            function ($item) use ($faker) {
+                return [
+                    'id' => $faker->uuid(),
+                    'maintenance_id' => intval($item['n_maintenance_id'] ?? $item['m_maintenance_id']),
+                    'observation' => $item['system_maintenance_according_text'] ?? $item['system_maintenance_text'],
+                    'action' => $item['system_maintenance_action'] ?? "",
+                    'date_created' => $item['system_maintenance_according_created'] ?? $item['system_maintenance_created'],
+                    'user_id' => intval($item['n_user_id'] ?? $item['m_user_id']),
+                    'system_id' => intval($item['n_system_id'] ?? $item['m_system_id']),
+                    'maintenance_type_id' => intval($item['n_maintenance_type_id'] ?? $item['m_maintenance_type_id']),
+                    'file_id' => intval($item['maintenance_file_id']),
+                    'file_url' => fileToURL($item['maintenance_file_path']),
+                    'is_according' => $item['is_according'],
+                ];
+            },
+            $results
+        );
+        return $this->successResponse(INFO_SUCCESS, $results);
     }
 }
