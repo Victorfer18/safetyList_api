@@ -363,7 +363,7 @@ class InspectionController extends BaseController
                     'maintenance_type_id' => intval($item['n_maintenance_type_id'] ?? $item['m_maintenance_type_id']),
                     'file_id' => intval($item['maintenance_file_id']),
                     'file_url' => fileToURL($item['maintenance_file_path']),
-                    'is_according' => $item['is_according'],
+                    'is_according' => intval($item['is_according']),
                 ];
             },
             $results
