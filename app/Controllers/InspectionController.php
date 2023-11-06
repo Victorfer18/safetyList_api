@@ -290,15 +290,12 @@ class InspectionController extends BaseController
                 'maintenance_type_id' => $result->maintenance_type_id,
                 'maintenance_type_name' => $result->maintenance_type_name,
             ];
-
             if ($result->qtd_total !== null && $result->qtd_total > 0) {
                 $modifiedResults = [];
-
                 for ($count = 1; $count <= $result->qtd_total; $count++) {
                     $maintenanceType['maintenance_type_name'] = $count . ' - ' . $result->maintenance_type_name;
                     $modifiedResults[] = $maintenanceType;
                 }
-
                 $maintenanceTypes = array_merge($maintenanceTypes, $modifiedResults);
             } else {
                 $maintenanceTypes[] = $maintenanceType;
@@ -332,17 +329,19 @@ class InspectionController extends BaseController
         $maintenance_type_id = $this->request->getVar('maintenance_type_id');
         $query1 = $this->db->table('system_maintenance_according n')
             ->select('n.system_maintenance_according_id as n_maintenance_id, n.user_id as n_user_id, n.system_id as n_system_id, n.maintenance_type_id as n_maintenance_type_id, n.system_maintenance_according_text as system_maintenance_according_text, 
-            n.system_maintenance_according_created as system_maintenance_according_created,  inspection_id as system_maintenance_action,  f.*')
+            n.system_maintenance_according_created as system_maintenance_according_created,  inspection_id as system_maintenance_action, mt.maintenance_type_name, f.*')
             ->join('maintenance_file f', 'n.system_maintenance_according_id = f.system_maintenance_id')
+            ->join('maintenance_type mt', 'n.maintenance_type_id = mt.maintenance_type_id', 'left')
             ->where('n.user_id', $user_id)
             ->where('n.system_id', $system_id)
             ->where('n.maintenance_type_id', $maintenance_type_id);
 
         $query2 = $this->db->table('system_maintenance m')
             ->select('m.system_maintenance_id as m_maintenance_id, m.user_id as m_user_id, m.system_id as m_system_id, m.maintenance_type_id as m_maintenance_type_id, m.system_maintenance_text as system_maintenance_text, 
-            m.system_maintenance_created as system_maintenance_created, m.system_maintenance_action as system_maintenance_action,
+            m.system_maintenance_created as system_maintenance_created, m.system_maintenance_action as system_maintenance_action, mt.maintenance_type_name,
              f.*')
             ->join('maintenance_file f', 'm.system_maintenance_id = f.system_maintenance_id')
+            ->join('maintenance_type mt', 'm.maintenance_type_id = mt.maintenance_type_id', 'left')
             ->where('m.user_id', $user_id)
             ->where('m.system_id', $system_id)
             ->where('m.maintenance_type_id', $maintenance_type_id);
@@ -352,6 +351,13 @@ class InspectionController extends BaseController
         $faker = \Faker\Factory::create();
         $results = array_map(
             function ($item) use ($faker) {
+                static $counter = 1;
+                static $prevMaintenanceTypeId = null;
+                if (intval($item['n_maintenance_type_id'] ?? $item['m_maintenance_type_id']) != $prevMaintenanceTypeId) {
+                    $counter = 1;
+                }
+                $prevMaintenanceTypeId = intval($item['n_maintenance_type_id'] ?? $item['m_maintenance_type_id']);
+
                 return [
                     'id' => $faker->uuid(),
                     'maintenance_id' => intval($item['n_maintenance_id'] ?? $item['m_maintenance_id']),
@@ -361,6 +367,7 @@ class InspectionController extends BaseController
                     'user_id' => intval($item['n_user_id'] ?? $item['m_user_id']),
                     'system_id' => intval($item['n_system_id'] ?? $item['m_system_id']),
                     'maintenance_type_id' => intval($item['n_maintenance_type_id'] ?? $item['m_maintenance_type_id']),
+                    'maintenance_type_name' => $counter++ . ' - ' . $item['maintenance_type_name'],
                     'file_id' => intval($item['maintenance_file_id']),
                     'file_url' => fileToURL($item['maintenance_file_path']),
                     'is_according' => intval($item['is_according']),
@@ -368,6 +375,7 @@ class InspectionController extends BaseController
             },
             $results
         );
+
         return $this->successResponse(INFO_SUCCESS, $results);
     }
 }
