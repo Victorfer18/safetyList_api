@@ -290,6 +290,7 @@ class InspectionController extends BaseController
 
             $maintenanceTypes[] = [
                 'id' => $result->maintenance_type_id,
+                'maintenance_type_id' => $result->maintenance_type_id,
                 'maintenance_type_name' => $count . ' - ' . $result->maintenance_type_name,
             ];
         }
