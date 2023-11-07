@@ -318,7 +318,7 @@ class InspectionController extends BaseController
     {
         $validation = $this->validate([
             'system_id' => 'required|numeric|is_natural_no_zero',
-            'maintenance_type_id' => 'required|numeric|is_natural_no_zero',
+
         ]);
 
         if ($validation === false) {
@@ -326,15 +326,13 @@ class InspectionController extends BaseController
         }
         $user_id = DATA_JWT->user_id;
         $system_id = $this->request->getVar('system_id');
-        $maintenance_type_id = $this->request->getVar('maintenance_type_id');
         $query1 = $this->db->table('system_maintenance_according n')
             ->select('n.system_maintenance_according_id as n_maintenance_id, n.user_id as n_user_id, n.system_id as n_system_id, n.maintenance_type_id as n_maintenance_type_id, n.system_maintenance_according_text as system_maintenance_according_text, 
             n.system_maintenance_according_created as system_maintenance_according_created,  inspection_id as system_maintenance_action, mt.maintenance_type_name, f.*')
             ->join('maintenance_file f', 'n.system_maintenance_according_id = f.system_maintenance_id')
             ->join('maintenance_type mt', 'n.maintenance_type_id = mt.maintenance_type_id', 'left')
             ->where('n.user_id', $user_id)
-            ->where('n.system_id', $system_id)
-            ->where('n.maintenance_type_id', $maintenance_type_id);
+            ->where('n.system_id', $system_id);
 
         $query2 = $this->db->table('system_maintenance m')
             ->select('m.system_maintenance_id as m_maintenance_id, m.user_id as m_user_id, m.system_id as m_system_id, m.maintenance_type_id as m_maintenance_type_id, m.system_maintenance_text as system_maintenance_text, 
@@ -343,8 +341,7 @@ class InspectionController extends BaseController
             ->join('maintenance_file f', 'm.system_maintenance_id = f.system_maintenance_id')
             ->join('maintenance_type mt', 'm.maintenance_type_id = mt.maintenance_type_id', 'left')
             ->where('m.user_id', $user_id)
-            ->where('m.system_id', $system_id)
-            ->where('m.maintenance_type_id', $maintenance_type_id);
+            ->where('m.system_id', $system_id);
 
         $query1->union($query2);
         $results = $query1->get()->getResultArray();
