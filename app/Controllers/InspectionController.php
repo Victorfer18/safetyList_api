@@ -293,10 +293,7 @@ class InspectionController extends BaseController
             $count = $result->qtd_total ?? 1; // Use qtd_total if it exists, otherwise default to 1
             for ($i = 1; $i <= $count; $i++) {
                 $modifiedMaintenanceType = $maintenanceType;
-                if ($count > 1) {
-                    $modifiedMaintenanceType['maintenance_type_name'] = $i . ' - ' . $result->maintenance_type_name;
-                }
-                $maintenanceTypes[] = $modifiedMaintenanceType;
+                $modifiedMaintenanceType['maintenance_type_name'] = $i . ' - ' . $result->maintenance_type_name;
             }
         }
         $faker = \Faker\Factory::create();
