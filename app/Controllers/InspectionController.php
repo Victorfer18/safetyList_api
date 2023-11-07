@@ -285,27 +285,20 @@ class InspectionController extends BaseController
 
         $maintenanceTypes = [];
 
-        foreach ($maintenanceTypes as $maintenanceType) {
-            $count = $maintenanceType['count'] ?? 1;
-            $modifiedMaintenanceType = $maintenanceType;
-            $modifiedMaintenanceType['maintenance_type_name'] = $count . ' - ' . $modifiedMaintenanceType['maintenance_type_name'];
+        foreach ($results as $result) {
+            $count = $result->qtd_total ?? 1;
 
-            $maintenanceTypes[] = $modifiedMaintenanceType;
+            $maintenanceTypes[] = [
+                'id' => $result->maintenance_type_id,
+                'maintenance_type_name' => $count . ' - ' . $result->maintenance_type_name,
+            ];
         }
 
         $maintenanceTypes = array_unique($maintenanceTypes, SORT_REGULAR);
 
-        $faker = \Faker\Factory::create();
-        $maintenanceTypes = array_map(function ($item) use ($faker) {
-            return [
-                'id' => $faker->uuid(),
-                'maintenance_type_id' => $item['maintenance_type_id'],
-                'maintenance_type_name' => $item['maintenance_type_name'],
-            ];
-        }, $maintenanceTypes);
-
         return $this->successResponse(INFO_SUCCESS, $maintenanceTypes);
     }
+
 
     public function getMaintenance()
     {
