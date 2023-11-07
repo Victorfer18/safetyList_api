@@ -284,12 +284,12 @@ class InspectionController extends BaseController
         $results = $query->getResult();
 
         $maintenanceTypes = [];
-
+        $faker = \Faker\Factory::create();
         foreach ($results as $result) {
             $count = $result->qtd_total ?? 1;
 
             $maintenanceTypes[] = [
-                'id' => $result->maintenance_type_id,
+                'id' => $faker->uuid(),
                 'maintenance_type_id' => $result->maintenance_type_id,
                 'maintenance_type_name' => $count . ' - ' . $result->maintenance_type_name,
             ];
