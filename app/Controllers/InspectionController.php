@@ -57,7 +57,7 @@ class InspectionController extends BaseController
             },
             $result
         );
-        return $this->successResponse(INFO_SUCCESS, $result);
+        return $this->successResponse(INFO_SUCCESS, $payload);
     }
     public function updateInspectionStatusById()
     {
