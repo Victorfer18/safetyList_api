@@ -21,6 +21,7 @@ class ClientController extends BaseController
                 'CLI.client_parent',
                 'CLI.client_created',
                 'CLITYP.client_type_name',
+                'CLITYP.client_type_image_path',
                 'INF.info_name',
                 'PAR.client_id as parent_id',
             ])
