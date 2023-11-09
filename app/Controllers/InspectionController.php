@@ -32,32 +32,12 @@ class InspectionController extends BaseController
                 'STTS_INSP.status_inspection_desc',
             ])
             ->join('status_inspection STTS_INSP', 'INSP.status_inspection = STTS_INSP.status_inspection_id', 'inner')
-            ->join('client_type CT', 'INSP.client_id = CT.client_type_id', 'inner')
             ->join('info INFO', 'INSP.client_id = INFO.client_id', 'inner')
             ->join('user USR', 'INSP.user_id = USR.user_id', 'left')
             ->where('INSP.client_id', $id_client);
+
         $result = $query->get()->getResultArray();
-        $payload = array_map(
-            function ($item) {
-                return [
-                    'inspection_id' => intval($item['inspection_id']),
-                    'inspection_name' => $item['inspection_name'],
-                    'client_id' => intval($item['client_id']),
-                    'info_name' => $item['info_name'],
-                    'date_estimated' => $item['date_estimated'],
-                    'date_init' => $item['date_init'],
-                    'date_end' => $item['date_end'],
-                    'date_created' => $item['date_created'],
-                    'user_id' => intval($item['user_id']),
-                    'user_name' => $item['user_name'],
-                    'status_inspection' => intval($item['status_inspection']),
-                    'status_inspection_desc' => $item['status_inspection_desc'],
-                    'image' => fileToURL($item['client_type_image_path']),
-                ];
-            },
-            $result
-        );
-        return $this->successResponse(INFO_SUCCESS, $payload);
+        return $this->successResponse(INFO_SUCCESS, $result);
     }
     public function updateInspectionStatusById()
     {

@@ -34,8 +34,18 @@ class ClientController extends BaseController
             ->where('CLI.client_parent', $id_parent)
             ->orderBy('INF.info_name', 'ASC')
             ->get();
-
-        return $this->successResponse(INFO_SUCCESS, $query->getResultArray());
+        $result = $query->getResultArray();
+        $payload = array_map(function ($item) {
+            return [
+                'id' => $item['client_id'],
+                'name' => $item['info_name'],
+                'type' => $item['client_type_name'],
+                'parent' => $item['parent_id'],
+                'created' => $item['client_created'],
+                'image' => fileToURL($item['client_type_image_path']),
+            ];
+        }, $result);
+        return $this->successResponse(INFO_SUCCESS, $payload);
     }
 
     public function getLogosInspectables(int $id_client)
