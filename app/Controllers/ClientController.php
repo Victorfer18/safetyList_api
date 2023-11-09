@@ -38,11 +38,11 @@ class ClientController extends BaseController
         $result = $query->getResultArray();
         $payload = array_map(function ($item) {
             return [
-                'id' => $item['client_id'],
-                'name' => $item['info_name'],
-                'type' => $item['client_type_name'],
-                'parent' => $item['parent_id'],
-                'created' => $item['client_created'],
+                'client_id' => $item['client_id'],
+                'info_name' => $item['info_name'],
+                'client_type_name' => $item['client_type_name'],
+                'parent_id' => $item['parent_id'],
+                'client_created' => $item['client_created'],
                 'image' => fileToURL($item['client_type_image_path']),
             ];
         }, $result);

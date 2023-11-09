@@ -31,7 +31,7 @@ function uploadFile(object $file, string $filePath)
     $destinationDirectory = getcwd() . '/uploads/' . $filePath;
     if (!is_dir($destinationDirectory)) {
         mkdir($destinationDirectory, 0755, true);
-        $sourceIndexPath = __DIR__ . '/../../writable/uploads/index.html';
+        $sourceIndexPath = __DIR__ . '/../../public/uploads/index.html';
         $destinationIndexPath = $destinationDirectory . 'index.html';
         copy($sourceIndexPath, $destinationIndexPath);
     }
@@ -53,11 +53,12 @@ function removeFile(string $file)
 
 function fileToURL(string $file): string
 {
-    $server = "https://safetylist.safety2u.com.br/";
-    $basePath = "public/uploads/";
-    $file = explode('/', $file)[7] . "/" . explode('/', $file)[8];
-    return $server . $basePath . $file;
+    $server = "https://safetylist.safety2u.com.br/public/";
+    $publicPos = strpos($file, "/public/");
+    $filePath = substr($file, $publicPos + strlen("/public/"));
+    return $server . $filePath;
 }
+
 
 function generateJWT(array $payload, string $key): string
 {
