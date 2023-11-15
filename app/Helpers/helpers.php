@@ -53,7 +53,7 @@ function removeFile(string $file)
 
 function fileToURL(string $file): string
 {
-    $server = "https://safetylist.safety2u.com.br/public/";
+    $server = "https://safetylist.safety2u.com.br/public";
     $publicPos = strpos($file, "/public/");
     $filePath = substr($file, $publicPos + strlen("/public/"));
     return $server . $filePath;
