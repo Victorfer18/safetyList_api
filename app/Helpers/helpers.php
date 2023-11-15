@@ -24,22 +24,26 @@ define('WARNING_PASSWORD_WEAK', 'A senha é fraca. Use uma combinação de letra
 define('CONFIRM_DELETE_USER', 'Tem certeza de que deseja excluir este usuário? Esta ação não pode ser desfeita.');
 define('ERROR_INVALID_USER_OR_PASSWORD', 'Usuário ou senha inválidos.');
 define('ERROR_ACCOUNT_INACTIVE', 'Sua conta está inativa. Entre em contato com o suporte para obter assistência.');
+define('ERROR', 'Algo deu errado. Entre em contato com o suporte para obter assistência.');
 
 
 
 function uploadFile(object $file, string $filePath)
 {
-    $destinationDirectory = getcwd() . '/uploads/' . $filePath;
-    if (!is_dir($destinationDirectory)) {
-        mkdir($destinationDirectory, 0755, true);
-        $sourceIndexPath = __DIR__ . '/../../public/uploads/index.html';
-        $destinationIndexPath = $destinationDirectory . 'index.html';
-        copy($sourceIndexPath, $destinationIndexPath);
-    }
-    $fileName = time() . "_" . $file->getName();
-    $destinationPath = $destinationDirectory . $fileName;
-    if (move_uploaded_file($file->getPathname(), $destinationPath)) {
-        return $filePath . $fileName;
+    if ($file !== null && $file instanceof \CodeIgniter\HTTP\Files\UploadedFile) {
+        $destinationDirectory = getcwd() . '/uploads/' . $filePath;
+        if (!is_dir($destinationDirectory)) {
+            mkdir($destinationDirectory, 0755, true);
+            $sourceIndexPath = __DIR__ . '/../../public/uploads/index.html';
+            $destinationIndexPath = $destinationDirectory . 'index.html';
+            copy($sourceIndexPath, $destinationIndexPath);
+        }
+        $fileName = time() . "_" . $file->getName();
+        $destinationPath = $destinationDirectory . $fileName;
+        if (move_uploaded_file($file->getPathname(), $destinationPath)) {
+            return $filePath . $fileName;
+        }
+        return false;
     }
     return false;
 }

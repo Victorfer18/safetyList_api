@@ -247,10 +247,18 @@ class InspectionController extends BaseController
                 'system_maintenance_action' => $action ?? ""
             ];
         }
-
-        uploadFile($image, $image->store() . "/");
+        $uploadFile = uploadFile($image, time() . "/");
+        if (!$uploadFile) {
+            return $this->errorResponse(ERROR);
+        }
         $query->insert($data);
-
+        $system_maintenance_id = $this->db->insertID();
+        $dataFile = [
+            'system_maintenance_id' => $system_maintenance_id,
+            'maintenance_file_path' => $uploadFile,
+        ];
+        $queryInsertFile = $this->db->table('maintenance_file');
+        $queryInsertFile->insert($dataFile);
         return $this->successResponse(INFO_SUCCESS);
     }
 
