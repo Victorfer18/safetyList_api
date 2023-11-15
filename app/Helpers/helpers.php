@@ -3,6 +3,7 @@
 use Firebase\JWT\JWT;
 
 define('ERROR_SEARCH_NOT_FOUND', 'Não encontrado(a).');
+define('ERROR_SEARCH_NOT_FOUND_USER', 'Usuário não encontrado para o uso desta ferramenta.');
 define('ERROR_INVALID_INPUT', 'Entrada inválida.');
 define('ERROR_PERMISSION_DENIED', 'Permissão negada.');
 define('ERROR_ALREADY_EXISTS', 'Já existe um registro com essas informações.');
