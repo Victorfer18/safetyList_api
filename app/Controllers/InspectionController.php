@@ -34,6 +34,7 @@ class InspectionController extends BaseController
             ->join('status_inspection STTS_INSP', 'INSP.status_inspection = STTS_INSP.status_inspection_id', 'inner')
             ->join('info INFO', 'INSP.client_id = INFO.client_id', 'inner')
             ->join('user USR', 'INSP.user_id = USR.user_id', 'left')
+            ->whereIn('INSP.status_inspection', [1, 2])
             ->where('INSP.client_id', $id_client);
 
         $result = $query->get()->getResultArray();
@@ -257,6 +258,7 @@ class InspectionController extends BaseController
             'system_maintenance_id' => $system_maintenance_id,
             'maintenance_file_path' => $uploadFile,
         ];
+
         $queryInsertFile = $this->db->table('maintenance_file');
         $queryInsertFile->insert($dataFile);
         return $this->successResponse(INFO_SUCCESS);
