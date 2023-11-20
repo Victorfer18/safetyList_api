@@ -12,7 +12,6 @@ $routes->get('/validate_jwt', 'SystemController::validateJwt', ['filter' => 'aut
 $routes->group('clients', function ($routes) {
     $routes->get('getLogoInspectable/(:any)', 'ClientController::getLogosInspectables/$1');
     $routes->get('(:any)', 'ClientController::getClientsByIdParent/$1', ['filter' => 'authFilter']);
-    $routes->get('(:any)', 'ClientController::getClientsByIdParent/$1');
 });
 
 $routes->group('inspections', function ($routes) {

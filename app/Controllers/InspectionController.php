@@ -174,7 +174,7 @@ class InspectionController extends BaseController
         $rules = [
             'system_type_id' => 'required|numeric|is_natural_no_zero',
             'maintenance_type_id' => 'required|numeric|is_natural_no_zero',
-            'consistency_status' => 'required|in_list[true, false]',
+            'consistency_status' => 'required|in_list[1, 0]',
             'observation' => 'required',
             'client_parent' => 'required|numeric',
             'image' => 'uploaded[image]|mime_in[image,image/jpg,image/jpeg,image/png]'
@@ -236,7 +236,7 @@ class InspectionController extends BaseController
             'maintenance_type_id' => $maintenance_type_id
         ];
 
-        if (!$consistency_status) {
+        if ($consistency_status == 0) {
             $query = $this->db->table('system_maintenance');
             $data = [
                 'system_maintenance_text' => $observation,
@@ -257,10 +257,20 @@ class InspectionController extends BaseController
         $dataFile = [
             'system_maintenance_id' => $system_maintenance_id,
             'maintenance_file_path' => $uploadFile,
+            'is_according' => $consistency_status
         ];
-
+        $conditions = [
+            'system_maintenance_id' => $system_maintenance_id,
+            'is_according' => $consistency_status
+        ];
         $queryInsertFile = $this->db->table('maintenance_file');
-        $queryInsertFile->insert($dataFile);
+        $queryInsertFile->where($conditions)->get()->getResultArray();
+        if (empty($queryInsertFile)) {
+            $queryInsertFile->insert($dataFile);
+        } else {
+            $queryInsertFile->set($dataFile)->where($conditions)->update();
+        }
+
         return $this->successResponse(INFO_SUCCESS);
     }
 
@@ -308,7 +318,10 @@ class InspectionController extends BaseController
                 }
                 $maintenanceTypes = array_merge($maintenanceTypes, $modifiedResults);
             } else {
-                $maintenanceTypes[] = $maintenanceType;
+                $maintenanceTypes[] = [
+                    'maintenance_type_id' => $result->maintenance_type_id,
+                    'maintenance_type_name' => 1  . ' - ' .  $result->maintenance_type_name,
+                ];
             }
         }
 
@@ -377,13 +390,12 @@ class InspectionController extends BaseController
                     'maintenance_type_id' => intval($item['n_maintenance_type_id'] ?? $item['m_maintenance_type_id']),
                     'maintenance_type_name' => $counter++ . ' - ' . $item['maintenance_type_name'],
                     'file_id' => intval($item['maintenance_file_id']),
-                    'file_url' => fileToURL($item['maintenance_file_path']),
+                    'file_url' => fileToURL($item['maintenance_file_path'], "/uploads"),
                     'is_according' => intval($item['is_according']),
                 ];
             },
             $results
         );
-
         return $this->successResponse(INFO_SUCCESS, $results);
     }
 }

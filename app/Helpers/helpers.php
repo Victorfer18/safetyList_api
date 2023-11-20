@@ -38,7 +38,7 @@ function uploadFile(object $file, string $filePath)
             $destinationIndexPath = $destinationDirectory . 'index.html';
             copy($sourceIndexPath, $destinationIndexPath);
         }
-        $fileName = time() . "_" . $file->getName();
+        $fileName = time() . "." . $file->getExtension();
         $destinationPath = $destinationDirectory . $fileName;
         if (move_uploaded_file($file->getPathname(), $destinationPath)) {
             return $filePath . $fileName;
@@ -56,12 +56,10 @@ function removeFile(string $file)
     }
 }
 
-function fileToURL(string $file): string
+function fileToURL(string $file, string $subFolder = ""): string
 {
-    $server = "https://safetylist.safety2u.com.br/public/";
-    $publicPos = strpos($file, "/public/");
-    $filePath = substr($file, $publicPos + strlen("/public/"));
-    return $server . $filePath;
+    $server = "https://safetylist.safety2u.com.br/public" . $subFolder . "/" . $file;
+    return $server;
 }
 
 
