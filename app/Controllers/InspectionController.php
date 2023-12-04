@@ -7,10 +7,11 @@ use App\Controllers\BaseController;
 class InspectionController extends BaseController
 {
     private $db;
-
+    private $DATA_JWT;
     public function __construct()
     {
         $this->db = \Config\Database::connect();
+        $this->DATA_JWT = json_decode(DATA_JWT);
     }
 
     public function getInspectionsByClientId(int $id_client)
@@ -51,7 +52,7 @@ class InspectionController extends BaseController
             return $this->validationErrorResponse();
         }
 
-        $id_user = DATA_JWT->user_id;
+        $id_user = $this->DATA_JWT->user_id;
         $status = $this->request->getVar('status_inspection');
         $inspection_id = $this->request->getVar('inspection_id');
         $date = date('Y-m-d H:i:s');
@@ -177,6 +178,7 @@ class InspectionController extends BaseController
             'consistency_status' => 'required|in_list[1, 0]',
             'observation' => 'required',
             'client_parent' => 'required|numeric',
+            'inspection_id' => 'required|numeric',
             'image' => 'uploaded[image]|mime_in[image,image/jpg,image/jpeg,image/png]'
         ];
 
@@ -186,8 +188,9 @@ class InspectionController extends BaseController
 
         $system_type_id = $this->request->getVar('system_type_id');
         $maintenance_type_id = $this->request->getVar('maintenance_type_id');
-        $user_id = DATA_JWT->user_id;
+        $user_id = $this->DATA_JWT->user_id;
         $client_parent = $this->request->getVar('client_parent');
+        $inspection_id = $this->request->getVar('inspection_id');
         $consistency_status = $this->request->getVar('consistency_status');
         $observation = $this->request->getVar('observation');
         $action = $this->request->getVar('action');
@@ -235,7 +238,8 @@ class InspectionController extends BaseController
                     'system_maintenance_according_created' => date('Y-m-d H:i:s'),
                     'user_id' => $user_id,
                     'system_id' => $system_id,
-                    'maintenance_type_id' => $maintenance_type_id
+                    'maintenance_type_id' => $maintenance_type_id,
+                    'inspection_id' => $inspection_id,
                 ];
                 break;
             case 0:
@@ -248,6 +252,7 @@ class InspectionController extends BaseController
                     'user_id' => $user_id,
                     'system_id' => $system_id,
                     'maintenance_type_id' => $maintenance_type_id,
+                    'inspection_id' => $inspection_id,
                     'system_maintenance_action' => $action
                 ];
                 break;
@@ -344,7 +349,7 @@ class InspectionController extends BaseController
         if ($validation === false) {
             return $this->validationErrorResponse();
         }
-        $user_id = DATA_JWT->user_id;
+        $user_id = $this->DATA_JWT->user_id;
         $system_id = $this->request->getVar('system_id');
         $query1 = $this->db->table('system_maintenance_according n')
             ->select('n.system_maintenance_according_id as n_maintenance_id, n.user_id as n_user_id, n.system_id as n_system_id, n.maintenance_type_id as n_maintenance_type_id, n.system_maintenance_according_text as system_maintenance_according_text, 
