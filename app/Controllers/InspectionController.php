@@ -81,7 +81,7 @@ class InspectionController extends BaseController
     {
         $rules = [
             'inspection_id' => 'required|numeric|is_natural_no_zero',
-            'client_id' => 'required|numeric|is_natural_no_zero',
+            'client_parent' => 'required|numeric|is_natural_no_zero',
             'system_type_id' => 'required|numeric|is_natural_no_zero',
         ];
 
@@ -90,12 +90,12 @@ class InspectionController extends BaseController
         }
 
         $inspection_id = $this->request->getVar('inspection_id');
-        $client_id = $this->request->getVar('client_id');
+        $client_parent = $this->request->getVar('client_parent');
         $system_type_id = $this->request->getVar('system_type_id');
 
         $fields = [
             'inspection_id' => $inspection_id,
-            'client_id' => $client_id,
+            'client_id' => $client_parent,
             'system_type_id' => $system_type_id,
         ];
         $query = $this->db->table('sys_inspection');
@@ -114,7 +114,7 @@ class InspectionController extends BaseController
         return $this->successResponse(INFO_SUCCESS);
     }
 
-    public function getInspectableList()
+    public function getInspecTableList()
     {
         $rules = [
             'inspection_id' => 'required|numeric|is_natural_no_zero',
@@ -192,7 +192,7 @@ class InspectionController extends BaseController
         $observation = $this->request->getVar('observation');
         $action = $this->request->getVar('action');
         $image = $this->request->getFile('image');
-        if (!$consistency_status) {
+        if (intval($consistency_status) == 0) {
             if (!$this->validate(['action' => 'required'])) {
                 return $this->validationErrorResponse();
             }
@@ -226,51 +226,55 @@ class InspectionController extends BaseController
             return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
         }
         $system_id = $system_id[0]["system_id"];
-
-        $query = $this->db->table('system_maintenance_according');
-        $data = [
-            'system_maintenance_according_text' => $observation,
-            'system_maintenance_according_created' => date('Y-m-d H:i:s'),
-            'user_id' => $user_id,
-            'system_id' => $system_id,
-            'maintenance_type_id' => $maintenance_type_id
-        ];
-
-        if ($consistency_status == 0) {
-            $query = $this->db->table('system_maintenance');
-            $data = [
-                'system_maintenance_text' => $observation,
-                'system_maintenance_created' => date('Y-m-d H:i:s'),
-                'system_maintenance_expiration' => date('Y-m-d', strtotime('+30 days')),
-                'user_id' => $user_id,
-                'system_id' => $system_id,
-                'maintenance_type_id' => $maintenance_type_id,
-                'system_maintenance_action' => $action ?? ""
-            ];
+        switch (intval($consistency_status)) {
+            case 1:
+                $typeTableSystem = 'system_maintenance_according';
+                $typeTableFille = 'maintenance_file_according';
+                $data = [
+                    'system_maintenance_according_text' => $observation,
+                    'system_maintenance_according_created' => date('Y-m-d H:i:s'),
+                    'user_id' => $user_id,
+                    'system_id' => $system_id,
+                    'maintenance_type_id' => $maintenance_type_id
+                ];
+                break;
+            case 0:
+                $typeTableSystem = 'system_maintenance';
+                $typeTableFille = 'maintenance_file';
+                $data = [
+                    'system_maintenance_text' => $observation,
+                    'system_maintenance_created' => date('Y-m-d H:i:s'),
+                    'system_maintenance_expiration' => date('Y-m-d', strtotime('+30 days')),
+                    'user_id' => $user_id,
+                    'system_id' => $system_id,
+                    'maintenance_type_id' => $maintenance_type_id,
+                    'system_maintenance_action' => $action
+                ];
+                break;
+            default:
+                break;
         }
         $uploadFile = uploadFile($image, time() . "/");
         if (!$uploadFile) {
             return $this->errorResponse(ERROR);
         }
-        $query->insert($data);
+        $systemData = $this->db->table($typeTableSystem);
+        $systemData->insert($data);
         $system_maintenance_id = $this->db->insertID();
         $dataFile = [
             'system_maintenance_id' => $system_maintenance_id,
             'maintenance_file_path' => $uploadFile,
-            'is_according' => $consistency_status
         ];
         $conditions = [
             'system_maintenance_id' => $system_maintenance_id,
-            'is_according' => $consistency_status
         ];
-        $queryInsertFile = $this->db->table('maintenance_file');
-        $queryInsertFile->where($conditions)->get()->getResultArray();
-        if (empty($queryInsertFile)) {
+        $queryInsertFile = $this->db->table($typeTableFille);
+        $existFille = $queryInsertFile->where($conditions)->get()->getResultArray();
+        if (empty($existFille)) {
             $queryInsertFile->insert($dataFile);
         } else {
             $queryInsertFile->set($dataFile)->where($conditions)->update();
         }
-
         return $this->successResponse(INFO_SUCCESS);
     }
 
@@ -288,20 +292,12 @@ class InspectionController extends BaseController
         $system_type_id = $this->request->getVar('system_type_id');
         $client_id = $this->request->getVar('client_id');
 
-        $query = $this->db->table('maintenance_type mt')
-            ->select('mt.maintenance_type_id, mt.maintenance_type_name, s.qtd_total')
-            ->join('sys s', 'mt.system_type_id = s.system_type_id', 'left')
-            ->where('mt.situation_id', 1)
-            ->where('mt.is_safetyList', 1)
-            ->where('mt.system_type_id', $system_type_id)
-            ->where('s.client_id', $client_id)
-            ->get();
+        $query = $this->db->query('CALL sp_getMaintenanceType(?, ?)', array($system_type_id, $client_id));
+        $results = $query->getResult();
 
-        if (!$query) {
+        if (!$results) {
             return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
         }
-
-        $results = $query->getResult();
 
         $maintenanceTypes = [];
 
@@ -310,9 +306,9 @@ class InspectionController extends BaseController
                 'maintenance_type_id' => $result->maintenance_type_id,
                 'maintenance_type_name' => $result->maintenance_type_name,
             ];
-            if ($result->qtd_total !== null && $result->qtd_total > 0) {
+            if ($result->maintenance_index !== null && $result->maintenance_index > 0) {
                 $modifiedResults = [];
-                for ($count = 1; $count <= $result->qtd_total; $count++) {
+                for ($count = 1; $count <= $result->maintenance_index; $count++) {
                     $maintenanceType['maintenance_type_name'] = $count . ' - ' . $result->maintenance_type_name;
                     $modifiedResults[] = $maintenanceType;
                 }
@@ -353,7 +349,7 @@ class InspectionController extends BaseController
         $query1 = $this->db->table('system_maintenance_according n')
             ->select('n.system_maintenance_according_id as n_maintenance_id, n.user_id as n_user_id, n.system_id as n_system_id, n.maintenance_type_id as n_maintenance_type_id, n.system_maintenance_according_text as system_maintenance_according_text, 
             n.system_maintenance_according_created as system_maintenance_according_created,  inspection_id as system_maintenance_action, mt.maintenance_type_name, f.*')
-            ->join('maintenance_file f', 'n.system_maintenance_according_id = f.system_maintenance_id')
+            ->join('maintenance_file_according f', 'n.system_maintenance_according_id = f.system_maintenance_according_id')
             ->join('maintenance_type mt', 'n.maintenance_type_id = mt.maintenance_type_id', 'left')
             ->where('n.user_id', $user_id)
             ->where('n.system_id', $system_id);
@@ -391,7 +387,6 @@ class InspectionController extends BaseController
                     'maintenance_type_name' => $counter++ . ' - ' . $item['maintenance_type_name'],
                     'file_id' => intval($item['maintenance_file_id']),
                     'file_url' => fileToURL($item['maintenance_file_path'], "/uploads"),
-                    'is_according' => intval($item['is_according']),
                 ];
             },
             $results
