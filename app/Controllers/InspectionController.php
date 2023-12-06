@@ -298,42 +298,17 @@ class InspectionController extends BaseController
         $client_id = $this->request->getVar('client_id');
 
         $query = $this->db->query('CALL sp_getMaintenanceType(?, ?)', array($system_type_id, $client_id));
-        $results = $query->getResult();
-
-        if (!$results) {
-            return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
-        }
-
-        $maintenanceTypes = [];
-
-        foreach ($results as $result) {
-            $maintenanceType = [
-                'maintenance_type_id' => $result->maintenance_type_id,
-                'maintenance_type_name' => $result->maintenance_type_name,
-            ];
-            if ($result->maintenance_index !== null && $result->maintenance_index > 0) {
-                $modifiedResults = [];
-                for ($count = 1; $count <= $result->maintenance_index; $count++) {
-                    $maintenanceType['maintenance_type_name'] = $count . ' - ' . $result->maintenance_type_name;
-                    $modifiedResults[] = $maintenanceType;
-                }
-                $maintenanceTypes = array_merge($maintenanceTypes, $modifiedResults);
-            } else {
-                $maintenanceTypes[] = [
-                    'maintenance_type_id' => $result->maintenance_type_id,
-                    'maintenance_type_name' => 1  . ' - ' .  $result->maintenance_type_name,
-                ];
-            }
-        }
+        $results = $query->getResultArray();
 
         $faker = \Faker\Factory::create();
         $maintenanceTypes = array_map(function ($item) use ($faker) {
             return [
                 'id' => $faker->uuid(),
-                'maintenance_type_id' => $item['maintenance_type_id'],
-                'maintenance_type_name' => $item['maintenance_type_name'],
+                'maintenance_type_id' => $item['maintenance_type_id'] ?? "",
+                'maintenance_type_name' => $item['maintenance_type_name'] ?? "",
+                'maintenance_index' => $item['maintenance_index'] ?? "",
             ];
-        }, $maintenanceTypes);
+        }, $results);
 
         return $this->successResponse(INFO_SUCCESS, $maintenanceTypes);
     }
