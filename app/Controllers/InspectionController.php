@@ -229,7 +229,9 @@ class InspectionController extends BaseController
             return $this->errorResponse(ERROR_SEARCH_NOT_FOUND);
         }
         $system_id = $system_id[0]["system_id"];
-        switch (intval($consistency_status)) {
+        $consistency_status = intval($consistency_status);
+
+        switch ($consistency_status) {
             case 1:
                 $typeTableSystem = 'system_maintenance_according';
                 $typeTableFille = 'maintenance_file_according';
@@ -273,6 +275,12 @@ class InspectionController extends BaseController
         $conditions = [
             'system_maintenance_id' => $system_maintenance_id,
         ];
+        if ($consistency_status === 1) {
+            $dataFile['system_maintenance_according_id'] = $dataFile['system_maintenance_id'];
+            unset($dataFile['system_maintenance_id']);
+            $conditions['system_maintenance_according_id'] = $conditions['system_maintenance_id'];
+            unset($conditions['system_maintenance_id']);
+        }
         $queryInsertFile = $this->db->table($typeTableFille);
         $existFille = $queryInsertFile->where($conditions)->get()->getResultArray();
         if (empty($existFille)) {
@@ -312,7 +320,6 @@ class InspectionController extends BaseController
 
         return $this->successResponse(INFO_SUCCESS, $maintenanceTypes);
     }
-
 
     public function getMaintenance()
     {
