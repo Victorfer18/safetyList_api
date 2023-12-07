@@ -325,7 +325,6 @@ class InspectionController extends BaseController
     {
         $validation = $this->validate([
             'system_id' => 'required|numeric|is_natural_no_zero',
-
         ]);
 
         if ($validation === false) {
@@ -355,13 +354,6 @@ class InspectionController extends BaseController
         $faker = \Faker\Factory::create();
         $results = array_map(
             function ($item) use ($faker) {
-                static $counter = 1;
-                static $prevMaintenanceTypeId = null;
-                if (intval($item['n_maintenance_type_id'] ?? $item['m_maintenance_type_id']) != $prevMaintenanceTypeId) {
-                    $counter = 1;
-                }
-                $prevMaintenanceTypeId = intval($item['n_maintenance_type_id'] ?? $item['m_maintenance_type_id']);
-
                 return [
                     'id' => $faker->uuid(),
                     'maintenance_id' => intval($item['n_maintenance_id'] ?? $item['m_maintenance_id']),
@@ -371,7 +363,7 @@ class InspectionController extends BaseController
                     'user_id' => intval($item['n_user_id'] ?? $item['m_user_id']),
                     'system_id' => intval($item['n_system_id'] ?? $item['m_system_id']),
                     'maintenance_type_id' => intval($item['n_maintenance_type_id'] ?? $item['m_maintenance_type_id']),
-                    'maintenance_type_name' => $counter++ . ' - ' . $item['maintenance_type_name'],
+                    'maintenance_type_name' => $item['maintenance_type_name'],
                     'file_id' => intval($item['maintenance_file_id']),
                     'file_url' => fileToURL($item['maintenance_file_path'], "/uploads"),
                 ];
