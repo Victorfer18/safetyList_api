@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use CodeIgniter\Database\Query;
 
 class InspectionController extends BaseController
 {
@@ -117,40 +118,58 @@ class InspectionController extends BaseController
 
     public function getInspecTableList()
     {
-        $rules = [
+        $validationRules = [
             'inspection_id' => 'required|numeric|is_natural_no_zero',
             'client_id' => 'required|numeric|is_natural_no_zero',
         ];
-        if (!$this->validate($rules)) {
+
+        if (!$this->validate($validationRules)) {
             return $this->validationErrorResponse();
         }
-        $inspection_id = $this->request->getVar('inspection_id');
-        $client_id = $this->request->getVar('client_id');
-        $client_id = intval($client_id);
-        $query = $this->db->table('client CLI')
+
+        $inspectionId = $this->request->getVar('inspection_id');
+        $clientId = intval($this->request->getVar('client_id'));
+
+        $clientIdsQuery = $this->db->table('client CLI')
             ->select('CLICHL.client_id')
             ->join('client CLICHL', 'CLICHL.client_parent = CLI.client_id')
-            ->where('CLI.client_id', $client_id)
+            ->where('CLI.client_id', $clientId)
             ->get();
 
-        $clientIds = $query->getResultArray();
+        $clientIds = array_column($clientIdsQuery->getResultArray(), 'client_id');
 
-        $clientIds = array_column($clientIds, 'client_id');
-        $query = $this->db->table('sys SYS')
-            ->select('SYS.system_id, SYS.client_id, CLI.client_level, CLI.client_parent, SYS.situation_id, SYS.system_type_id, TYP.system_type_name, TYP.system_type_icon, GRP.system_group_id, GRP.system_group_name, SYSP.is_closed, SYSP.inspection_id')
+        $systemsQuery = $this->db->table('sys SYS')
+            ->select('SYS.system_id, SYS.client_id, CLI.client_level, CLI.client_parent, SYS.situation_id, SYS.system_type_id, TYP.system_type_name, TYP.system_type_icon, GRP.system_group_id, GRP.system_group_name')
             ->join('client CLI', 'CLI.client_id = SYS.client_id')
             ->join('system_type TYP', 'SYS.system_type_id = TYP.system_type_id')
             ->join('system_group GRP', 'GRP.system_group_id = TYP.system_group_id')
-            ->join('sys_inspection SYSP', 'SYSP.system_type_id = SYS.system_type_id and SYSP.client_id = CLI.client_parent')
             ->whereIn('SYS.client_id', $clientIds)
-            ->where('SYSP.inspection_id', $inspection_id)
             ->where('SYS.situation_id', 1)
             ->where('TYP.situation_id', 1)
             ->where('TYP.is_safetyList', 1)
             ->get();
 
-        $inspectables = $query->getResultArray();
-        $inspectables = array_map(function ($item) {
+        $systems = $systemsQuery->getResultArray();
+
+        $inspectablesQuery = $this->db->table('sys_inspection')
+            ->select('system_type_id, client_id, is_closed')
+            ->where(['inspection_id' => $inspectionId, 'client_id' => $clientId])
+            ->get();
+
+        $inspectables = $inspectablesQuery->getResultArray();
+
+        $inspectablesMap = [];
+        foreach ($inspectables as $inspectable) {
+            $key = $inspectable['system_type_id'] . '_' . $inspectable['client_id'];
+            $inspectablesMap[$key] = $inspectable['is_closed'];
+        }
+
+        foreach ($systems as &$system) {
+            $key = $system['system_type_id'] . '_' . $system['client_parent'];
+            $system['is_closed'] = $inspectablesMap[$key] ?? 0;
+        }
+
+        $formattedSystems = array_map(function ($item) {
             return [
                 "system_id" => intval($item["system_id"]),
                 "client_id" => intval($item["client_id"]),
@@ -163,12 +182,13 @@ class InspectionController extends BaseController
                 "system_group_id" => intval($item["system_group_id"]),
                 "system_group_name" => $item["system_group_name"],
                 "is_closed" => intval($item["is_closed"]),
-                "inspection_id" => intval($item["inspection_id"])
             ];
-        }, $inspectables);
+        }, $systems);
 
-        return $this->successResponse(INFO_SUCCESS, $inspectables);
+        return $this->successResponse(INFO_SUCCESS, $formattedSystems);
     }
+
+
 
     public function registerMaintenance()
     {
