@@ -392,4 +392,37 @@ class InspectionController extends BaseController
         );
         return $this->successResponse(INFO_SUCCESS, $results);
     }
+    public function getSectorsByIdInspection(int $id_inspection)
+    {
+        $query = $this->db->table('inspection i')
+            ->select([
+                'i.inspection_id',
+                'sap.sector_area_pavement_id',
+                'sp.sector_pavement_id',
+                'sa.sector_area_id',
+                "CONCAT(sp.sector_pavement_name, ' - ', sa.sector_area_name,
+                 (CASE WHEN (sap.sector_area_pavement_section is not null and sap.sector_area_pavement_section <> '') THEN CONCAT(' - ', sap.sector_area_pavement_section)
+                  ELSE '' END)) AS fullSectorName",
+                'ins.is_closed'
+            ])
+            ->join('inspection_sector ins', 'i.inspection_id = ins.inspection_id')
+            ->join('sector_area_pavement sap', 'ins.sector_area_pavement_id = sap.sector_area_pavement_id AND i.client_id = sap.client_id')
+            ->join('sector_pavement sp', 'sap.sector_pavement_id = sp.sector_pavement_id')
+            ->join('sector_area sa', 'sap.sector_area_id = sa.sector_area_id')
+            ->where('sap.situation_id', 1)
+            ->where('i.inspection_id', $id_inspection)
+            ->get()->getResultArray();
+
+        $sectors = array_map(function ($item) {
+            return [
+                'inspection_id' => intval($item['inspection_id']),
+                'sector_area_pavement_id' => intval($item['sector_area_pavement_id']),
+                'sector_pavement_id' => intval($item['sector_pavement_id']),
+                'sector_area_id' => intval($item['sector_area_id']),
+                'fullSectorName' => $item['fullSectorName'],
+                'is_closed' => intval($item['is_closed']),
+            ];
+        }, $query);
+        return $this->successResponse(INFO_SUCCESS, $sectors);
+    }
 }
