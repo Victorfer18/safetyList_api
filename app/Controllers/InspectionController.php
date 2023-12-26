@@ -38,10 +38,20 @@ class InspectionController extends BaseController
             ->join('user USR', 'INSP.user_id = USR.user_id', 'left')
             ->whereIn('INSP.status_inspection', [1, 2])
             ->where('INSP.client_id', $id_client)
-            ->orderBy('INSP.date_estimated', 'DESC');
-
+            ->orderBy('INSP.date_estimated', 'ASC');
 
         $result = $query->get()->getResultArray();
+
+        usort($result, function ($a, $b) {
+            if ($a['date_estimated'] == '0000-00-00 00:00:00' && $b['date_estimated'] != '0000-00-00 00:00:00') {
+                return 1;
+            } elseif ($a['date_estimated'] != '0000-00-00 00:00:00' && $b['date_estimated'] == '0000-00-00 00:00:00') {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
+
         return $this->successResponse(INFO_SUCCESS, $result);
     }
     public function updateInspectionStatusById()
@@ -101,9 +111,43 @@ class InspectionController extends BaseController
             'inspection_id' => $inspection_id,
             'client_id' => $client_parent,
             'system_type_id' => $system_type_id,
-            'is_closed' => 0,
         ];
         $query = $this->db->table('sys_inspection');
+        $getInspectionById = $query->where($fields)->get()->getResultArray();
+
+        if (empty($getInspectionById)) {
+            $query
+                ->set('is_closed', 1)
+                ->insert($fields);
+            return $this->successResponse(INFO_SUCCESS);
+        }
+        $query
+            ->set('is_closed', 1)
+            ->set($fields)
+            ->where($fields)
+            ->update();
+        return $this->successResponse(INFO_SUCCESS);
+    }
+
+    public function setIsClosedSectors()
+    {
+        $rules = [
+            'inspection_id' => 'required|numeric|is_natural_no_zero',
+            'sector_area_pavement_id' => 'required|numeric|is_natural_no_zero',
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->validationErrorResponse();
+        }
+
+        $inspection_id = $this->request->getVar('inspection_id');
+        $sector_area_pavement_id = $this->request->getVar('sector_area_pavement_id');
+
+        $fields = [
+            'inspection_id' => $inspection_id,
+            'sector_area_pavement_id' => $sector_area_pavement_id,
+        ];
+        $query = $this->db->table('inspection_sector');
         $getInspectionById = $query->where($fields)->get()->getResultArray();
         if (empty($getInspectionById)) {
             $query
@@ -187,8 +231,14 @@ class InspectionController extends BaseController
                 "is_closed" => intval($item["is_closed"]),
             ];
         }, $systems);
-
-        return $this->successResponse(INFO_SUCCESS, $formattedSystems);
+        $closedCount = array_reduce($formattedSystems, function ($acc, $sector) {
+            return $acc + ($sector['is_closed'] === 1 ? 1 : 0);
+        }, 0);
+        $allClosed = ($closedCount === count($formattedSystems));
+        return $this->successResponse(INFO_SUCCESS, [
+            'allClosed' => $allClosed,
+            'inspecTables' => $formattedSystems,
+        ]);
     }
 
     public function registerMaintenance()
@@ -219,10 +269,10 @@ class InspectionController extends BaseController
         $image = $this->request->getFile('image');
         $sys_app_maintenances_id = $this->request->getVar('sys_app_maintenances_id');
 
-        $status_maintenance_according = 0;
-        $status_maintenance = 1;
+        $status_maintenance_according = 1;
+        $status_maintenance = 0;
 
-        if (intval($consistency_status) == $status_maintenance_according) {
+        if (intval($consistency_status) == $status_maintenance) {
             if (!$this->validate(['action' => 'required'])) {
                 return $this->validationErrorResponse();
             }
@@ -326,6 +376,7 @@ class InspectionController extends BaseController
             'system_type_id' => 'required|numeric|is_natural_no_zero',
             'client_id' => 'required|numeric|is_natural_no_zero',
             'sector_area_pavement_id' => 'required|numeric|is_natural_no_zero',
+            'inspection_id' => 'required|numeric|is_natural_no_zero',
         ];
 
         if (!$this->validate($rules)) {
@@ -336,11 +387,13 @@ class InspectionController extends BaseController
         $client_id = $this->request->getVar('client_id');
         $user_id = $this->DATA_JWT->user_id;
         $sector_area_pavement_id = $this->request->getVar('sector_area_pavement_id');
+        $inspection_id = $this->request->getVar('inspection_id');
 
         $query_maintenance_type = $this->db->table('sys_app_maintenances')
             ->where('client_id', $client_id)
             ->where('system_type_id', $system_type_id)
             ->where('sector_area_pavement_id', $sector_area_pavement_id)
+            ->where('inspection_id', $inspection_id)
             ->orderBy('maintenance_order', 'ASC')
             ->orderBy('maintenance_type_name', 'ASC')
             ->get();
@@ -356,7 +409,7 @@ class InspectionController extends BaseController
         $system_id = $results[0]['system_id'] ?? 0;
         $query1 = $this->db->table('system_maintenance_according n')
             ->select('n.system_maintenance_according_id as n_maintenance_id, n.user_id as n_user_id, n.system_id as n_system_id, n.maintenance_type_id as n_maintenance_type_id, n.system_maintenance_according_text as system_maintenance_according_text, n.sys_app_maintenances_id as sys_app_maintenances_according_id, 
-        n.system_maintenance_according_created as system_maintenance_according_created,  inspection_id as system_maintenance_action, mt.maintenance_type_name, f.*')
+        n.system_maintenance_according_created as system_maintenance_according_created, "" as system_maintenance_action, mt.maintenance_type_name, f.*')
             ->join('maintenance_file_according f', 'n.system_maintenance_according_id = f.system_maintenance_according_id')
             ->join('maintenance_type mt', 'n.maintenance_type_id = mt.maintenance_type_id', 'left')
             ->where('n.user_id', $user_id)
