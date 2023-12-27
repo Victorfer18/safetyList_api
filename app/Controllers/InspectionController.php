@@ -97,6 +97,7 @@ class InspectionController extends BaseController
             'inspection_id' => 'required|numeric|is_natural_no_zero',
             'client_parent' => 'required|numeric|is_natural_no_zero',
             'system_type_id' => 'required|numeric|is_natural_no_zero',
+            'sector_area_pavement_id' => 'required|numeric|is_natural_no_zero',
         ];
 
         if (!$this->validate($rules)) {
@@ -106,11 +107,13 @@ class InspectionController extends BaseController
         $inspection_id = $this->request->getVar('inspection_id');
         $client_parent = $this->request->getVar('client_parent');
         $system_type_id = $this->request->getVar('system_type_id');
+        $sector_area_pavement_id = $this->request->getVar('sector_area_pavement_id');
 
         $fields = [
             'inspection_id' => $inspection_id,
             'client_id' => $client_parent,
             'system_type_id' => $system_type_id,
+            'sector_area_pavement_id' => $sector_area_pavement_id,
         ];
         $query = $this->db->table('sys_inspection');
         $getInspectionById = $query->where($fields)->get()->getResultArray();
@@ -168,6 +171,7 @@ class InspectionController extends BaseController
         $validationRules = [
             'inspection_id' => 'required|numeric|is_natural_no_zero',
             'client_id' => 'required|numeric|is_natural_no_zero',
+            'sector_area_pavement_id' => 'required|numeric|is_natural_no_zero',
         ];
 
         if (!$this->validate($validationRules)) {
@@ -176,7 +180,7 @@ class InspectionController extends BaseController
 
         $inspectionId = $this->request->getVar('inspection_id');
         $clientId = intval($this->request->getVar('client_id'));
-
+        $sectorAreaPavementId = intval($this->request->getVar('sector_area_pavement_id'));
         $clientIdsQuery = $this->db->table('client CLI')
             ->select('CLICHL.client_id')
             ->join('client CLICHL', 'CLICHL.client_parent = CLI.client_id')
@@ -186,21 +190,22 @@ class InspectionController extends BaseController
         $clientIds = array_column($clientIdsQuery->getResultArray(), 'client_id');
 
         $systemsQuery = $this->db->table('sys SYS')
-            ->select('SYS.system_id, SYS.client_id, CLI.client_level, CLI.client_parent, SYS.situation_id, SYS.system_type_id, TYP.system_type_name, TYP.system_type_icon, GRP.system_group_id, GRP.system_group_name')
+            ->select('SYS.system_id, SYS.client_id, CLI.client_level, CLI.client_parent, SYS.situation_id, SYS.system_type_id, TYP.system_type_name, TYP.system_type_icon, GRP.system_group_id, GRP.system_group_name, SAM.sys_app_maintenances_id, SAM.sector_area_pavement_id')
             ->join('client CLI', 'CLI.client_id = SYS.client_id')
             ->join('system_type TYP', 'SYS.system_type_id = TYP.system_type_id')
             ->join('system_group GRP', 'GRP.system_group_id = TYP.system_group_id')
+            ->join('sys_app_maintenances SAM', 'SAM.system_type_id = SYS.system_type_id AND SAM.client_id = SYS.client_id')
             ->whereIn('SYS.client_id', $clientIds)
+            ->where('SAM.sector_area_pavement_id', $sectorAreaPavementId)
             ->where('SYS.situation_id', 1)
             ->where('TYP.situation_id', 1)
             ->where('TYP.is_safetyList', 1)
             ->get();
 
         $systems = $systemsQuery->getResultArray();
-
         $inspectablesQuery = $this->db->table('sys_inspection')
             ->select('system_type_id, client_id, is_closed')
-            ->where(['inspection_id' => $inspectionId, 'client_id' => $clientId])
+            ->where(['inspection_id' => $inspectionId, 'client_id' => $clientId, 'sector_area_pavement_id' => $sectorAreaPavementId])
             ->get();
 
         $inspectables = $inspectablesQuery->getResultArray();
@@ -222,6 +227,7 @@ class InspectionController extends BaseController
                 "client_id" => intval($item["client_id"]),
                 "client_level" => intval($item["client_level"]),
                 "client_parent" => intval($item["client_parent"]),
+                "sector_area_pavement_id" => intval($item["sector_area_pavement_id"]),
                 "situation_id" => intval($item["situation_id"]),
                 "system_type_id" => intval($item["system_type_id"]),
                 "system_type_name" => $item["system_type_name"],
@@ -235,6 +241,7 @@ class InspectionController extends BaseController
             return $acc + ($sector['is_closed'] === 1 ? 1 : 0);
         }, 0);
         $allClosed = ($closedCount === count($formattedSystems));
+        $formattedSystems = array_values(array_unique($formattedSystems, SORT_REGULAR));
         return $this->successResponse(INFO_SUCCESS, [
             'allClosed' => $allClosed,
             'inspecTables' => $formattedSystems,
