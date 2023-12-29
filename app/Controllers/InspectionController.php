@@ -243,7 +243,7 @@ class InspectionController extends BaseController
         $allClosed = ($closedCount === count($formattedSystems));
         $formattedSystems = array_values(array_unique($formattedSystems, SORT_REGULAR));
         return $this->successResponse(INFO_SUCCESS, [
-            'allClosed' => $allClosed,
+            'allClosed' => empty($formattedSystems) ? false : $allClosed,
             'inspecTables' => $formattedSystems,
         ]);
     }
@@ -497,7 +497,7 @@ class InspectionController extends BaseController
         }, 0);
         $allClosed = ($closedCount === count($maintenanceTypes));
         return $this->successResponse(INFO_SUCCESS, [
-            'allClosed' => $allClosed,
+            'allClosed' => empty($maintenanceTypes) ? false : $allClosed,
             'maintenances' => $maintenanceTypes,
         ]);
     }
@@ -536,7 +536,7 @@ class InspectionController extends BaseController
         }, 0);
         $allClosed = ($closedCount === count($sectors));
         return $this->successResponse(INFO_SUCCESS, [
-            'allClosed' => $allClosed,
+            'allClosed' => empty($sectors) ? false : $allClosed,
             'sectors' => $sectors,
         ]);
     }
