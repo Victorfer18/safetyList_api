@@ -22,7 +22,9 @@ class UserModel extends Model
         'client_id',
         'user_created',
         'user_doc',
-        'user_password'
+        'user_password',
+        'isPanel',
+        'isSafetyList'
     ];
 
     // Dates

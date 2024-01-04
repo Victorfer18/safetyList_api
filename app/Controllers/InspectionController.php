@@ -272,18 +272,18 @@ class InspectionController extends BaseController
         $inspection_id = $this->request->getVar('inspection_id');
         $consistency_status = $this->request->getVar('consistency_status');
         $observation = $this->request->getVar('observation');
-        $action = $this->request->getVar('action');
+        $action = "";
         $image = $this->request->getFile('image');
         $sys_app_maintenances_id = $this->request->getVar('sys_app_maintenances_id');
 
         $status_maintenance_according = 1;
         $status_maintenance = 0;
 
-        if (intval($consistency_status) == $status_maintenance) {
-            if (!$this->validate(['action' => 'required'])) {
-                return $this->validationErrorResponse();
-            }
-        }
+        // if (intval($consistency_status) == $status_maintenance) {
+        //     if (!$this->validate(['action' => 'required'])) {
+        //         return $this->validationErrorResponse();
+        //     }
+        // }
         $query = $this->db->table('client AS CLI')
             ->select('CLI.client_id, CLI.client_parent, CLI.client_level, ADDR.address_street, ADDR.address_number, ADDR.address_zipcode, ADDR.address_district, ADDR.address_complement, STA.state_id, STA.state_acronym, STA.state_name, CIT.city_id, CIT.city_name, SIT.situation_id, SIT.situation_acronym, SIT.situation_name')
             ->select('(SELECT COUNT(*) FROM client BDG WHERE BDG.client_parent = CLI.client_id AND BDG.client_level = 4) as building_number', false)
@@ -416,7 +416,7 @@ class InspectionController extends BaseController
         $system_id = $results[0]['system_id'] ?? 0;
         $query1 = $this->db->table('system_maintenance_according n')
             ->select('n.system_maintenance_according_id as n_maintenance_id, n.user_id as n_user_id, n.system_id as n_system_id, n.maintenance_type_id as n_maintenance_type_id, n.system_maintenance_according_text as system_maintenance_according_text, n.sys_app_maintenances_id as sys_app_maintenances_according_id, 
-        n.system_maintenance_according_created as system_maintenance_according_created, "" as system_maintenance_action, mt.maintenance_type_name, f.*')
+        n.system_maintenance_according_created as system_maintenance_according_created, "" as system_maintenance_action, "" as system_maintenance_expiration, mt.maintenance_type_name, f.*')
             ->join('maintenance_file_according f', 'n.system_maintenance_according_id = f.system_maintenance_according_id')
             ->join('maintenance_type mt', 'n.maintenance_type_id = mt.maintenance_type_id', 'left')
             ->where('n.user_id', $user_id)
@@ -424,7 +424,7 @@ class InspectionController extends BaseController
 
         $query2 = $this->db->table('system_maintenance m')
             ->select('m.system_maintenance_id as m_maintenance_id, m.user_id as m_user_id, m.system_id as m_system_id, m.maintenance_type_id as m_maintenance_type_id, m.system_maintenance_text as system_maintenance_text, m.sys_app_maintenances_id as sys_app_maintenances_id, 
-        m.system_maintenance_created as system_maintenance_created, m.system_maintenance_action as system_maintenance_action, mt.maintenance_type_name,
+        m.system_maintenance_created as system_maintenance_created, m.system_maintenance_action as system_maintenance_action, m.system_maintenance_expiration as system_maintenance_expiration, mt.maintenance_type_name,
          f.*')
             ->join('maintenance_file f', 'm.system_maintenance_id = f.system_maintenance_id')
             ->join('maintenance_type mt', 'm.maintenance_type_id = mt.maintenance_type_id', 'left')
@@ -440,6 +440,7 @@ class InspectionController extends BaseController
                     'observation' => $item['system_maintenance_according_text'] ?? $item['system_maintenance_text'],
                     'action' => $item['system_maintenance_action'] ?? "",
                     'date_created' => $item['system_maintenance_according_created'] ?? $item['system_maintenance_created'],
+                    'date_expiration' => $item['system_maintenance_expiration'] ?? '',
                     'user_id' => intval($item['n_user_id'] ?? $item['m_user_id']),
                     'system_id' => intval($item['n_system_id'] ?? $item['m_system_id']),
                     'maintenance_type_id' => intval($item['n_maintenance_type_id'] ?? $item['m_maintenance_type_id']),
@@ -457,7 +458,7 @@ class InspectionController extends BaseController
                 if ($item['sys_app_maintenances_id'] == $maintenanceType['id']) {
                     $correspondingAnswer = [
                         'sys_app_maintenances_id' => intval($item['sys_app_maintenances_id']),
-                        'is_according' => empty($item['action']) ? 0 : 1,
+                        'is_according' => empty($item['date_expiration']) ? 0 : 1,
                         'is_closed' => 1,
                         'maintenance_id' => intval($item['maintenance_id']),
                         'observation' => $item['observation'] ?? "",

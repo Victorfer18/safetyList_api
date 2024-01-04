@@ -27,7 +27,7 @@ class User extends BaseController
         $userEntity->setUserPassword($this->request->getVar('user_password'));
         $conditions = [
             "user_email" => $userEntity->getUserEmail(),
-            "group_id" => 4,
+            "isSafetyList" => 1,
         ];
         $getUser = $userModel->where($conditions)->first();
         if (empty($getUser)) {
