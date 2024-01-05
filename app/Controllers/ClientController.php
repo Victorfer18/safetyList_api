@@ -12,7 +12,7 @@ class ClientController extends BaseController
         $this->db = \Config\Database::connect();
     }
 
-    public function getClientsByIdParent(int $id_parent)
+    public function getClients()
     {
         $userID = json_decode(DATA_JWT)->user_id;
         $query = $this->db->table("client AS CLI")
