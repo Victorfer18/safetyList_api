@@ -1,62 +1,69 @@
+## API para Inspeção de Segurança em Edifícios
+
+### Intenção da API
+
+A API para Inspeção de Segurança em Edifícios foi desenvolvida para facilitar a coleta, armazenamento e análise de dados relacionados a inspeções de segurança em edifícios. Esta API fornece endpoints para registrar relatórios de inspeção, consultar históricos de inspeção e gerar estatísticas sobre as condições de segurança dos edifícios inspecionados.
+
 # CodeIgniter 4 Application Starter
 
-## What is CodeIgniter?
+## O que é CodeIgniter?
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+CodeIgniter é um framework PHP full-stack para web que é leve, rápido, flexível e seguro.
+Mais informações podem ser encontradas no [site oficial](https://codeigniter.com).
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+Este repositório contém um aplicativo inicial instalável via composer.
+Ele foi construído a partir do
+[repositório de desenvolvimento](https://github.com/codeigniter4/CodeIgniter4).
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+Mais informações sobre os planos para a versão 4 podem ser encontradas em [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) nos fóruns.
 
-The user guide corresponding to the latest version of the framework can be found
-[here](https://codeigniter4.github.io/userguide/).
+O guia do usuário correspondente à última versão do framework pode ser encontrado
+[aqui](https://codeigniter4.github.io/userguide/).
 
-## Installation & updates
+## Instalação e atualizações
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+`composer create-project codeigniter4/appstarter` e então `composer update` sempre que
+houver um novo lançamento do framework.
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
+Ao atualizar, verifique as notas de lançamento para ver se há alguma mudança que você possa precisar aplicar
+na sua pasta `app`. Os arquivos afetados podem ser copiados ou mesclados de
 `vendor/codeigniter4/framework/app`.
 
-## Setup
+## Configuração
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+Copie `env` para `.env` e personalize para o seu aplicativo, especificamente o baseURL
+e qualquer configuração de banco de dados.
 
-## Important Change with index.php
+## Mudança importante com index.php
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+`index.php` não está mais na raiz do projeto! Ele foi movido para dentro da pasta *public*,
+para melhor segurança e separação de componentes.
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+Isso significa que você deve configurar seu servidor web para "apontar" para a pasta *public* do seu projeto, e
+não para a raiz do projeto. Uma prática melhor seria configurar um host virtual para apontar para lá. Uma prática ruim seria apontar seu servidor web para a raiz do projeto e esperar entrar em *public/...*, pois o restante da sua lógica e o
+framework ficarão expostos.
 
-**Please** read the user guide for a better explanation of how CI4 works!
+**Por favor** leia o guia do usuário para uma melhor explicação de como o CI4 funciona!
 
-## Repository Management
+## Gerenciamento do Repositório
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+Usamos problemas do GitHub, em nosso repositório principal, para rastrear **BUGS** e para rastrear pacotes de trabalho de **DESENVOLVIMENTO** aprovados.
+Usamos nosso [fórum](http://forum.codeigniter.com) para fornecer SUPORTE e discutir
+PEDIDOS DE FUNCIONALIDADES.
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+Este repositório é um "distribuição", construído por nosso script de preparação de lançamento.
+Problemas com ele podem ser levantados em nosso fórum, ou como problemas no repositório principal.
 
-## Server Requirements
+## Requisitos do Servidor
 
-PHP version 7.4 or higher is required, with the following extensions installed:
+É necessária a versão PHP 7.4 ou superior, com as seguintes extensões instaladas:
 
 - [intl](http://php.net/manual/en/intl.requirements.php)
 - [mbstring](http://php.net/manual/en/mbstring.installation.php)
 
-Additionally, make sure that the following extensions are enabled in your PHP:
+Além disso, certifique-se de que as seguintes extensões estão habilitadas no seu PHP:
 
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+- json (habilitado por padrão - não desative)
+- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) se você planeja usar MySQL
+- [libcurl](http://php.net/manual/en/curl.requirements.php) se você planeja usar a biblioteca HTTP\CURLRequest
+
