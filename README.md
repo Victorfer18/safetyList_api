@@ -67,3 +67,7 @@ Além disso, certifique-se de que as seguintes extensões estão habilitadas no 
 - [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) se você planeja usar MySQL
 - [libcurl](http://php.net/manual/en/curl.requirements.php) se você planeja usar a biblioteca HTTP\CURLRequest
 
+## Licença
+
+Este projeto está licenciado sob a Licença MIT. Veja o arquivo [LICENSE](./LICENSE) para mais detalhes.
+
